@@ -1,0 +1,61 @@
+{
+  "name": "AykoShop AI CRM - Scoring",
+  "description": "يحسب AI Lead Score + Sentiment لكل زبون كل ساعة",
+  "active": true,
+  "nodes": [
+    {
+      "id": "2d783191",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        224
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7ed712af",
+      "name": "Get Profiles To Score",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        224
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT p.subscriber_id, p.customer_name, p.channel, p.stage, p.interested_in, p.total_messages, string_agg(h.message, ' | ' ORDER BY h.created_at DESC) as recent_messages FROM aykoshop_profiles p LEFT JOIN aykoshop_chat_history h ON h.subscriber_id = p.subscriber_id AND h.created_at > NOW() - INTERVAL '7 days' WHERE p.last_seen > NOW() - INTERVAL '7 days' GROUP BY p.subscriber_id, p.customer_name, p.channel, p.stage, p.interested_in, p.total_messages LIMIT 50",
+        "options": {
+          "continueOnFail": true
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Get Profiles To Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

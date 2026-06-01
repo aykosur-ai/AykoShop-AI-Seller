@@ -1,0 +1,100 @@
+{
+  "name": "AykoShop Daily Report",
+  "description": "تقرير يومي كامل - يبعت على Telegram كل صباح 8AM",
+  "active": true,
+  "nodes": [
+    {
+      "id": "schedule01",
+      "name": "Every Day 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "webhook01",
+      "name": "Manual Report Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        224
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aykoshop-daily-report",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "code01",
+      "name": "Generate Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        224
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const [stats, orders] = await Promise.all([\n  this.helpers.httpRequest({ method: 'GET', url: 'http://5.189.170.55:4000/api/stats' }),\n  this.helpers.httpRequest({ method: 'GET', url: 'http://5.189.170.55:4000/api/orders' })\n]);\nconst today = new Date();\nconst todayOrders = (orders||[]).filter(o => new Date(o.created_at).toDateString() === today.toDateString());\nconst revenueToday = todayOrders.filter(o=>o.status==='delivered').reduce((s,o)=>s+(parseInt((o.price||'0').replace(/[^0-9]/g,''))||0),0);\nconst revenueMonth = (orders||[]).filter(o=>o.status==='delivered'&&new Date(o.created_at).getMonth()===today.getMonth()).reduce((s,o)=>s+(parseInt((o.price||'0').replace(/[^0-9]/g,''))||0),0);\nreturn [{ json: { revenue_today: revenueToday, revenue_month: revenueMonth, orders_today: todayOrders.length, orders_new: todayOrders.filter(o=>o.status==='new').length, orders_delivered: todayOrders.filter(o=>o.status==='delivered').length, total_customers: stats?.customers||0, messages_today: stats?.messages_today||0, available_products: stats?.available||0 } }];"
+      }
+    },
+    {
+      "id": "respond01",
+      "name": "Respond Report",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        224
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Report Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Report": {
+      "main": [
+        [
+          {
+            "node": "Respond Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

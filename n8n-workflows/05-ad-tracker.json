@@ -1,0 +1,157 @@
+{
+  "name": "AykoShop Ad Tracker",
+  "description": "يستقبل بيانات من ManyChat كي زبون يجي من إعلان ويحفظ ad_source فـ PostgreSQL",
+  "active": true,
+  "nodes": [
+    {
+      "id": "213fc7a5",
+      "name": "Ad Tracker Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aykoshop-ad-tracker",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "5dd57858",
+      "name": "Extract Ad Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const body = $input.first().json.body || {};\nconst subscriberId = String(body.subscriber_id || body.id || '');\nconst adSource = body.ad_source || body.ref || body.utm_source || '';\nif (!subscriberId || !adSource) return [{ json: { skip: true } }];\nreturn [{ json: { skip: false, subscriber_id: subscriberId, customer_name: body.first_name || 'زبون', ad_source: adSource, ad_campaign: body.utm_campaign || '', ad_platform: body.utm_medium || '' } }];"
+      }
+    },
+    {
+      "id": "1781c798",
+      "name": "Valid Ad Data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "69818b39",
+      "name": "Save Ad Source",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO aykoshop_ad_tracking (subscriber_id, customer_name, ad_source, ad_campaign, ad_platform) VALUES ('{{ $json.subscriber_id }}', '{{ $json.customer_name }}', '{{ $json.ad_source }}', '{{ $json.ad_campaign }}', '{{ $json.ad_platform }}') ON CONFLICT (subscriber_id, ad_source) DO UPDATE SET visits = aykoshop_ad_tracking.visits + 1, last_seen = NOW();",
+        "options": {
+          "continueOnFail": true
+        }
+      }
+    },
+    {
+      "id": "efd9b5b9",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"status\": \"ok\" }",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Ad Tracker Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Ad Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Ad Data": {
+      "main": [
+        [
+          {
+            "node": "Valid Ad Data?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Ad Data?": {
+      "main": [
+        [
+          {
+            "node": "Save Ad Source",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Ad Source": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

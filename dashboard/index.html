@@ -1,0 +1,3981 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AykoShop Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Cairo',sans-serif; background:#0a0e1a; color:#e2e8f0; min-height:100vh; }
+
+:root {
+  --primary:#4f46e5;
+  --primary-light:#6366f1;
+  --secondary:#06b6d4;
+  --success:#10b981;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --dark:#0f1323;
+  --card:#141929;
+  --card2:#1a2035;
+  --border:#1e2a45;
+  --text:#e2e8f0;
+  --text-muted:#64748b;
+  --sidebar-w:260px;
+  --bg:#0a0e1a;
+}
+
+/* LIGHT MODE */
+body.light {
+  --dark:#f8fafc;
+  --card:#ffffff;
+  --card2:#f1f5f9;
+  --border:#e2e8f0;
+  --text:#1e293b;
+  --text-muted:#64748b;
+  --bg:#f0f4f8;
+}
+
+body.light { background:#f0f4f8; color:#1e293b; }
+body.light .sidebar { background:#ffffff; box-shadow:0 0 20px rgba(0,0,0,0.08); }
+body.light .sidebar-info h3 { color:#1e293b; }
+body.light .nav-item { color:#64748b; }
+body.light .nav-item:hover { background:rgba(79,70,229,0.08); color:#1e293b; }
+body.light .nav-item.active { background:rgba(79,70,229,0.12); color:var(--primary); }
+body.light .card { background:#ffffff; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+body.light .topbar h1 { color:#1e293b; }
+body.light th { background:rgba(79,70,229,0.08); color:#64748b; }
+body.light td { color:#1e293b; }
+body.light .stat-card { background:#ffffff; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+body.light .stat-value { color:#1e293b; }
+body.light .modal-box { background:#ffffff; }
+body.light .modal-title { color:#1e293b; }
+body.light .form-group input,
+body.light .form-group select,
+body.light .form-group textarea { background:#f8fafc !important; color:#1e293b !important; -webkit-text-fill-color:#1e293b !important; }
+body.light .ai-input { background:#f8fafc !important; color:#1e293b !important; -webkit-text-fill-color:#1e293b !important; }
+body.light textarea { background:#f8fafc !important; color:#1e293b !important; -webkit-text-fill-color:#1e293b !important; }
+body.light input { color:#1e293b !important; -webkit-text-fill-color:#1e293b !important; }
+body.light select { color:#1e293b !important; -webkit-text-fill-color:#1e293b !important; background:#f8fafc !important; }
+body.light .search-box { background:#f8fafc !important; color:#1e293b !important; -webkit-text-fill-color:#1e293b !important; }
+body.light #system-prompt-text { background:#0f1729 !important; color:#fbbf24 !important; -webkit-text-fill-color:#fbbf24 !important; caret-color:#fbbf24; border-color:#2d3748 !important; }
+body.light .ai-input { background:#f8fafc; color:#1e293b; }
+body.light .ai-chat-container { background:#f8fafc; border-radius:12px; }
+body.light .chat-bubble.assistant { background:#f1f5f9; }
+body.light .chat-bubble.user { background:rgba(79,70,229,0.12); }
+body.light .training-item { background:#f8fafc; }
+body.light .error-item { background:rgba(239,68,68,0.04); }
+body.light .ad-link-box { background:#f8fafc; }
+body.light .search-box { background:#f8fafc; color:#1e293b; }
+body.light .period-tabs { background:#f1f5f9; }
+body.light .sidebar-footer { color:#94a3b8; }
+body.light .demand-item { background:rgba(79,70,229,0.05); }
+body.light ::-webkit-scrollbar-thumb { background:#cbd5e1; }
+
+/* SIDEBAR */
+.sidebar {
+  position:fixed; right:0; top:0;
+  width:var(--sidebar-w); height:100vh;
+  background:var(--dark);
+  border-left:1px solid var(--border);
+  display:flex; flex-direction:column;
+  z-index:100;
+  box-shadow:-4px 0 20px rgba(0,0,0,0.3);
+}
+
+.sidebar-header {
+  padding:24px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:14px;
+}
+
+.avatar-container {
+  position:relative; cursor:pointer;
+}
+
+.avatar {
+  width:52px; height:52px; border-radius:14px;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; font-weight:700; color:#fff;
+  overflow:hidden; position:relative;
+  border:2px solid var(--primary);
+}
+
+.avatar img {
+  width:100%; height:100%; object-fit:cover; display:none;
+}
+
+.avatar-upload {
+  position:absolute; inset:0;
+  background:rgba(0,0,0,0.6);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity 0.2s;
+  border-radius:14px;
+  font-size:0.7rem; color:#fff; text-align:center;
+  cursor:pointer;
+}
+
+.avatar-container:hover .avatar-upload { opacity:1; }
+
+.sidebar-info h3 { font-size:1rem; font-weight:700; color:#fff; }
+.sidebar-info span { font-size:0.75rem; color:var(--text-muted); }
+.status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success); margin-left:6px; animation:pulse 2s infinite; }
+
+@keyframes pulse {
+  0%,100% { opacity:1; }
+  50% { opacity:0.4; }
+}
+
+.nav { flex:1; padding:16px 12px; overflow-y:auto; }
+.nav-section { font-size:0.7rem; color:var(--text-muted); padding:8px 10px 4px; text-transform:uppercase; letter-spacing:1px; margin-top:8px; }
+
+.nav-item {
+  display:flex; align-items:center; gap:12px;
+  padding:11px 14px; cursor:pointer;
+  transition:all 0.2s; color:var(--text-muted);
+  font-size:0.9rem; border-radius:10px;
+  margin-bottom:2px; position:relative;
+}
+
+.nav-item:hover { background:rgba(79,70,229,0.1); color:#fff; }
+
+.nav-item.active {
+  background:linear-gradient(135deg,rgba(79,70,229,0.3),rgba(99,102,241,0.1));
+  color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(79,70,229,0.3);
+}
+
+.nav-item .icon { width:22px; text-align:center; font-size:1.1rem; }
+.nav-badge { margin-right:auto; background:var(--danger); color:#fff; font-size:0.7rem; padding:2px 7px; border-radius:10px; }
+
+.sidebar-footer {
+  padding:16px 20px;
+  border-top:1px solid var(--border);
+  font-size:0.78rem; color:var(--text-muted);
+  text-align:center;
+}
+
+/* MAIN */
+.main { margin-right:var(--sidebar-w); padding:24px; min-height:100vh; }
+
+.topbar {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:24px; padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+
+.topbar h1 { font-size:1.5rem; font-weight:700; color:#fff; }
+.topbar-right { display:flex; gap:10px; align-items:center; }
+
+.page { display:none; }
+.page.active { display:block; animation:fadeIn 0.3s ease; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* STATS */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+
+.stat-card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px; padding:20px;
+  position:relative; overflow:hidden;
+  transition:transform 0.2s;
+}
+
+.stat-card:hover { transform:translateY(-2px); }
+
+.stat-card::before {
+  content:''; position:absolute;
+  top:0; left:0; right:0; height:3px;
+  border-radius:16px 16px 0 0;
+}
+
+.stat-card.green::before { background:linear-gradient(90deg,var(--success),#34d399); }
+.stat-card.blue::before { background:linear-gradient(90deg,var(--secondary),#38bdf8); }
+.stat-card.purple::before { background:linear-gradient(90deg,var(--primary),var(--primary-light)); }
+.stat-card.orange::before { background:linear-gradient(90deg,var(--warning),#fbbf24); }
+.stat-card.red::before { background:linear-gradient(90deg,var(--danger),#f87171); }
+
+.stat-icon { font-size:1.8rem; margin-bottom:10px; }
+.stat-value { font-size:2rem; font-weight:800; color:#fff; line-height:1; }
+.stat-label { font-size:0.8rem; color:var(--text-muted); margin-top:4px; }
+.stat-change { font-size:0.75rem; margin-top:6px; }
+.stat-change.up { color:var(--success); }
+.stat-change.down { color:var(--danger); }
+
+/* CARDS */
+.card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px; padding:20px;
+  margin-bottom:20px;
+}
+
+.card-header {
+  display:flex; justify-content:space-between;
+  align-items:center; margin-bottom:16px;
+}
+
+.card-title { font-size:1rem; font-weight:700; color:#fff; }
+
+/* TABLE */
+table { width:100%; border-collapse:collapse; }
+th {
+  background:rgba(79,70,229,0.15);
+  color:var(--text-muted); font-size:0.78rem;
+  padding:10px 14px; text-align:right;
+  font-weight:600; letter-spacing:0.5px;
+}
+
+td { padding:12px 14px; border-bottom:1px solid var(--border); font-size:0.86rem; vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,0.02); }
+
+/* BADGES */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:20px;
+  font-size:0.75rem; font-weight:600;
+}
+
+.badge.available { background:rgba(16,185,129,0.15); color:var(--success); }
+.badge.sold { background:rgba(239,68,68,0.15); color:var(--danger); }
+.badge.hot { background:rgba(239,68,68,0.15); color:var(--danger); }
+.badge.warm { background:rgba(245,158,11,0.15); color:var(--warning); }
+.badge.cold { background:rgba(100,116,139,0.15); color:#94a3b8; }
+.badge.payment { background:rgba(16,185,129,0.15); color:var(--success); }
+.badge.instagram { background:rgba(225,48,108,0.15); color:#e1306c; }
+.badge.tiktok { background:rgba(255,255,255,0.1); color:#fff; }
+.badge.facebook { background:rgba(24,119,242,0.15); color:#1877f2; }
+.badge.youtube { background:rgba(255,0,0,0.15); color:#ff4444; }
+.badge.telegram { background:rgba(0,136,204,0.15); color:#0088cc; }
+.badge.error { background:rgba(239,68,68,0.15); color:var(--danger); }
+.badge.resolved { background:rgba(16,185,129,0.15); color:var(--success); }
+
+/* BUTTONS */
+.btn {
+  padding:8px 18px; border:none; border-radius:10px;
+  cursor:pointer; font-size:0.85rem; font-weight:600;
+  transition:all 0.2s; font-family:'Cairo',sans-serif;
+  display:inline-flex; align-items:center; gap:6px;
+}
+
+.btn-primary { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:#fff; box-shadow:0 4px 12px rgba(79,70,229,0.3); }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(79,70,229,0.4); }
+.btn-success { background:linear-gradient(135deg,var(--success),#34d399); color:#fff; }
+.btn-danger { background:linear-gradient(135deg,var(--danger),#f87171); color:#fff; }
+.btn-warning { background:linear-gradient(135deg,var(--warning),#fbbf24); color:#1a1a2e; }
+.btn-ghost { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+.btn-ghost:hover { background:rgba(255,255,255,0.05); color:#fff; }
+.btn-sm { padding:5px 12px; font-size:0.78rem; }
+
+/* MODAL */
+.modal {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.75); z-index:1000;
+  justify-content:center; align-items:center;
+  backdrop-filter:blur(4px);
+}
+.modal.open { display:flex; }
+
+.modal-box {
+  background:var(--dark); border:1px solid var(--border);
+  border-radius:20px; padding:28px;
+  width:520px; max-height:85vh; overflow-y:auto;
+  animation:fadeIn 0.2s ease;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal-title { font-size:1.15rem; font-weight:700; color:#fff; margin-bottom:20px; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+/* FORMS */
+.form-group { margin-bottom:16px; }
+.form-group label { display:block; font-size:0.82rem; color:var(--text-muted); margin-bottom:6px; font-weight:500; }
+.form-group input, .form-group select, .form-group textarea {
+  width:100%; background:#0a0e1a;
+  border:1px solid var(--border); color:#e2e8f0 !important;
+  padding:10px 14px; border-radius:10px; font-size:0.9rem;
+  font-family:'Cairo',sans-serif; transition:border-color 0.2s;
+  -webkit-text-fill-color:#e2e8f0;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline:none; border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(79,70,229,0.15);
+}
+.form-group textarea { height:85px; resize:vertical; }
+textarea, input[type="text"], input[type="password"], input[type="email"], input:not([type]), input[type="number"] {
+  color:#e2e8f0 !important;
+  -webkit-text-fill-color:#e2e8f0 !important;
+  caret-color:#e2e8f0;
+}
+select { color:#e2e8f0 !important; }
+body.light select[style*="background:#0a0e1a"] { background:#f8fafc !important; color:#1e293b !important; -webkit-text-fill-color:#1e293b !important; }
+body.light textarea, body.light input[type="text"], body.light input:not([type]), body.light input[type="number"], body.light input[type="password"] {
+  -webkit-text-fill-color:#1e293b !important;
+  caret-color:#1e293b;
+}
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+/* PERIOD TABS */
+.period-tabs { display:flex; gap:6px; background:var(--dark); padding:4px; border-radius:10px; }
+.period-tab {
+  padding:5px 14px; border-radius:8px;
+  cursor:pointer; font-size:0.82rem; font-weight:600;
+  background:transparent; color:var(--text-muted); border:none;
+  font-family:'Cairo',sans-serif; transition:all 0.2s;
+}
+.period-tab.active { background:var(--primary); color:#fff; }
+
+/* DEMAND BARS */
+.demand-item {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px;
+  background:rgba(79,70,229,0.06);
+  border:1px solid rgba(79,70,229,0.15);
+  border-radius:12px; margin-bottom:8px;
+  transition:background 0.2s;
+}
+.demand-item:hover { background:rgba(79,70,229,0.1); }
+.demand-bar-bg { flex:1; height:6px; background:var(--border); border-radius:3px; }
+.demand-bar { height:6px; background:linear-gradient(90deg,var(--primary),var(--secondary)); border-radius:3px; transition:width 0.6s ease; }
+
+/* RANK BADGES */
+.rank-badge { width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:0.82rem; }
+.rank-1 { background:rgba(255,215,0,0.2); color:gold; }
+.rank-2 { background:rgba(192,192,192,0.2); color:silver; }
+.rank-3 { background:rgba(205,127,50,0.2); color:#cd7f32; }
+.rank-n { background:rgba(79,70,229,0.15); color:var(--primary-light); }
+
+/* CHAT */
+.chat-container { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; padding:10px; }
+.chat-bubble { padding:10px 14px; border-radius:14px; max-width:78%; font-size:0.86rem; line-height:1.5; }
+.chat-bubble.user { background:rgba(79,70,229,0.25); border:1px solid rgba(79,70,229,0.2); }
+.chat-bubble.assistant { background:var(--card2); border:1px solid var(--border); }
+
+/* AI CHAT */
+.ai-chat-container { height:420px; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.ai-input-row { display:flex; gap:10px; margin-top:12px; }
+.ai-input {
+  flex:1; background:#0a0e1a; border:1px solid var(--border);
+  color:#fff; padding:12px 16px; border-radius:12px;
+  font-size:0.9rem; font-family:'Cairo',sans-serif;
+}
+.ai-input:focus { outline:none; border-color:var(--primary); }
+.ai-typing { display:none; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:14px; width:fit-content; font-size:0.85rem; color:var(--text-muted); }
+.ai-typing.show { display:block; }
+
+/* ALERTS */
+.alert { padding:12px 16px; border-radius:12px; margin-bottom:16px; font-size:0.86rem; display:flex; align-items:center; gap:10px; }
+.alert-info { background:rgba(6,182,212,0.1); color:var(--secondary); border:1px solid rgba(6,182,212,0.2); }
+.alert-success { background:rgba(16,185,129,0.1); color:var(--success); border:1px solid rgba(16,185,129,0.2); }
+.alert-danger { background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid rgba(239,68,68,0.2); }
+.alert-warning { background:rgba(245,158,11,0.1); color:var(--warning); border:1px solid rgba(245,158,11,0.2); }
+
+/* SEARCH */
+.search-box {
+  background:var(--card); border:1px solid var(--border);
+  color:#fff; padding:9px 16px; border-radius:10px;
+  font-size:0.86rem; width:230px; font-family:'Cairo',sans-serif;
+}
+.search-box:focus { outline:none; border-color:var(--primary); }
+
+/* IMG THUMB */
+.img-thumb { width:46px; height:46px; border-radius:10px; object-fit:cover; background:var(--card2); border:1px solid var(--border); }
+
+/* EMPTY STATE */
+.empty-state { text-align:center; padding:48px; color:var(--text-muted); }
+.empty-state .icon { font-size:3.5rem; margin-bottom:12px; opacity:0.5; }
+.empty-state p { font-size:0.9rem; }
+
+/* AD LINKS */
+.ad-link-box { background:#0a0e1a; border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:0.78rem; color:var(--secondary); word-break:break-all; display:flex; align-items:center; gap:10px; }
+.copy-btn { background:var(--primary); color:#fff; border:none; border-radius:8px; padding:5px 12px; font-size:0.75rem; cursor:pointer; white-space:nowrap; font-family:'Cairo',sans-serif; }
+.copy-btn:hover { background:var(--primary-light); }
+
+/* TRAINING */
+.training-item { background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:10px; transition:border-color 0.2s; }
+.training-item.approved { border-right:3px solid var(--success); }
+.training-item.pending { border-right:3px solid var(--warning); }
+.training-q { font-size:0.85rem; color:var(--text-muted); margin-bottom:8px; }
+.training-a { font-size:0.9rem; color:#fff; }
+
+/* ERROR ITEMS */
+.error-item { background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); border-radius:14px; padding:16px; margin-bottom:10px; }
+.error-item.resolved { background:rgba(16,185,129,0.05); border-color:rgba(16,185,129,0.2); }
+
+.score-bar-bg { width:100%; height:8px; background:var(--border); border-radius:4px; margin-top:4px; }
+.score-bar { height:8px; border-radius:4px; transition:width 0.6s ease; }
+.score-high { background:linear-gradient(90deg,var(--success),#34d399); }
+.score-mid { background:linear-gradient(90deg,var(--warning),#fbbf24); }
+.score-low { background:linear-gradient(90deg,var(--danger),#f87171); }
+.sentiment-hot { color:var(--danger); }
+.sentiment-interested { color:var(--warning); }
+.sentiment-neutral { color:var(--text-muted); }
+.sentiment-angry { color:#ef4444; }
+.pipeline-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; }
+.pipeline-new_lead { background:rgba(100,116,139,0.15); color:#94a3b8; }
+.pipeline-interested { background:rgba(6,182,212,0.15); color:var(--secondary); }
+.pipeline-negotiating { background:rgba(245,158,11,0.15); color:var(--warning); }
+.pipeline-order_confirmed { background:rgba(16,185,129,0.15); color:var(--success); }
+.pipeline-delivered { background:rgba(79,70,229,0.15); color:var(--primary-light); }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--primary); }
+
+/* KANBAN */
+.kanban-board { display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; min-height:500px; }
+.kanban-col { min-width:210px; width:210px; background:var(--card); border:1px solid var(--border); border-radius:14px; display:flex; flex-direction:column; }
+.kanban-col-header { padding:12px 14px; font-weight:700; font-size:0.85rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; border-radius:14px 14px 0 0; }
+.kanban-col-body { flex:1; padding:8px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; max-height:550px; }
+.kanban-card { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:11px; cursor:pointer; transition:all 0.2s; }
+.kanban-card:hover { border-color:var(--primary); transform:translateY(-1px); }
+.kanban-card .kc-name { font-weight:600; font-size:0.85rem; color:#fff; margin-bottom:3px; }
+.kanban-card .kc-product { font-size:0.76rem; color:var(--text-muted); margin-bottom:5px; }
+.kanban-card .kc-price { font-size:0.82rem; color:var(--warning); font-weight:700; }
+.status-new { border-right:3px solid #94a3b8; }
+.status-contacted { border-right:3px solid var(--secondary); }
+.status-confirmed { border-right:3px solid var(--primary); }
+.status-shipped { border-right:3px solid var(--warning); }
+.status-delivered { border-right:3px solid var(--success); }
+.status-cancelled { border-right:3px solid var(--danger); }
+
+/* GRID LAYOUTS */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login-page" style="display:none;position:fixed;inset:0;background:#0a0e1a;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#141929;border:1px solid #2d2d4a;border-radius:20px;padding:40px;width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="font-size:3rem;margin-bottom:10px;">🛍️</div>
+    <h2 style="color:#fff;font-size:1.5rem;margin-bottom:4px;">AykoShop</h2>
+    <p style="color:#64748b;font-size:0.85rem;margin-bottom:28px;">Dashboard الإداري</p>
+
+    <div id="login-error" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:10px;border-radius:8px;margin-bottom:16px;font-size:0.85rem;"></div>
+
+    <div style="margin-bottom:16px;text-align:right;">
+      <label style="font-size:0.82rem;color:#64748b;display:block;margin-bottom:6px;">🔑 كلمة المرور</label>
+      <input type="password" id="login-password"
+        style="width:100%;background:#0a0e1a;border:1px solid #2d2d4a;color:#e2e8f0;padding:12px 16px;border-radius:10px;font-size:1rem;font-family:'Cairo',sans-serif;text-align:center;letter-spacing:4px;"
+        placeholder="••••••••"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+
+    <button onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;font-family:'Cairo',sans-serif;">
+      🔓 دخول
+    </button>
+
+    <button onclick="showResetPage()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.82rem;margin-top:12px;font-family:'Cairo',sans-serif;text-decoration:underline;">
+      🔑 نسيت كلمة المرور؟
+    </button>
+
+    <!-- Reset Password Panel -->
+    <div id="reset-panel" style="display:none;margin-top:16px;border-top:1px solid #2d2d4a;padding-top:16px;">
+      <p style="color:#94a3b8;font-size:0.82rem;margin-bottom:10px;">أدخل الإيميل المسجل لتغيير كلمة المرور</p>
+      <input type="email" id="reset-email"
+        style="width:100%;background:#0a0e1a;border:1px solid #2d2d4a;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;margin-bottom:8px;"
+        placeholder="Aykosur@gmail.com">
+      <input type="password" id="reset-new-pass"
+        style="width:100%;background:#0a0e1a;border:1px solid #2d2d4a;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:0.9rem;font-family:'Cairo',sans-serif;margin-bottom:8px;"
+        placeholder="كلمة المرور الجديدة">
+      <div id="reset-msg" style="display:none;font-size:0.82rem;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="hideResetPage()" style="flex:1;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:8px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;">إلغاء</button>
+        <button onclick="resetPassword()" style="flex:2;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:600;">✅ تغيير</button>
+      </div>
+    </div>
+
+    <p style="color:#2d2d4a;font-size:0.72rem;margin-top:20px;">AykoShop © 2026</p>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="avatar-container" onclick="document.getElementById('avatar-input').click()">
+      <div class="avatar" id="avatar-display">
+        <span id="avatar-letter">أ</span>
+        <img id="avatar-img" alt="avatar">
+      </div>
+      <div class="avatar-upload">📷<br>تغيير</div>
+      <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="changeAvatar(this)">
+    </div>
+    <div class="sidebar-info">
+      <h3>AykoShop <span class="status-dot"></span></h3>
+      <span>لوحة التحكم</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">الرئيسية</div>
+    <div class="nav-item active" onclick="showPage('overview',this)">
+      <span class="icon">📊</span> نظرة عامة
+    </div>
+    <div class="nav-item" onclick="showPage('report',this)">
+      <span class="icon">📈</span> التقرير اليومي
+    </div>
+
+    <div class="nav-section">المتجر</div>
+    <div class="nav-item" onclick="showPage('products',this)">
+      <span class="icon">📦</span> السلع
+    </div>
+    <div class="nav-item" onclick="showPage('demands',this)">
+      <span class="icon">🔥</span> الطلبات الشائعة
+    </div>
+    <div class="nav-item" onclick="showPage('customers',this)">
+      <span class="icon">👥</span> الزبائن
+    </div>
+
+    <div class="nav-section">التسويق</div>
+    <div class="nav-item" onclick="showPage('adtracking',this)">
+      <span class="icon">📣</span> تتبع الإعلانات
+    </div>
+
+    <div class="nav-section">الذكاء</div>
+    <div class="nav-item" onclick="showPage('training',this)">
+      <span class="icon">🧠</span> تعليم AI
+    </div>
+    <div class="nav-item" onclick="showPage('prompt',this)">
+      <span class="icon">⚡</span> Prompt AI
+    </div>
+    <div class="nav-item" onclick="showPage('unknown',this)" id="nav-unknown">
+      <span class="icon">❓</span> أسئلة مجهولة
+      <span class="nav-badge" id="unknown-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('conversations',this)">
+      <span class="icon">💬</span> مكتبة المحادثات
+    </div>
+    <div class="nav-item" onclick="showPage('aichat',this)">
+      <span class="icon">🤖</span> مساعد AI
+    </div>
+    <div class="nav-item" onclick="showPage('intelligence',this)">
+      <span class="icon">💡</span> Business Intelligence
+    </div>
+    <div class="nav-item" onclick="showPage('imagematch',this)">
+      <span class="icon">📸</span> Image Matcher
+    </div>
+    <div class="nav-item" onclick="showPage('warehouse',this)">
+      <span class="icon">🗄️</span> Data Warehouse
+    </div>
+
+    <div class="nav-section">المبيعات</div>
+    <div class="nav-item" onclick="showPage('orders',this)" id="nav-orders">
+      <span class="icon">📋</span> الطلبات
+      <span class="nav-badge" id="orders-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('kanban',this)">
+      <span class="icon">🗂️</span> Kanban Pipeline
+    </div>
+
+    <div class="nav-section">CRM</div>
+    <div class="nav-item" onclick="showPage('pipeline',this)">
+      <span class="icon">🎯</span> Pipeline & Scoring
+    </div>
+    <div class="nav-item" onclick="showPage('broadcast',this)">
+      <span class="icon">📢</span> Broadcast
+    </div>
+
+    <div class="nav-item" onclick="showPage('settings',this)">
+      <span class="icon">⚙️</span> الإعدادات
+    </div>
+
+    <div class="nav-section">النظام</div>
+    <div class="nav-item" onclick="showPage('segments',this)">
+      <span class="icon">🎯</span> Customer Segments
+    </div>
+    <div class="nav-item" onclick="showPage('followups',this)" id="nav-followups">
+      <span class="icon">⏰</span> Follow-up
+      <span class="nav-badge" id="followups-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('insights',this)">
+      <span class="icon">🔮</span> AI Insights
+    </div>
+    <div class="nav-item" onclick="showPage('apikeys',this)">
+      <span class="icon">🔑</span> API مفتوحة
+    </div>
+    <div class="nav-item" onclick="showPage('errors',this)" id="nav-errors">
+      <span class="icon">🚨</span> الأخطاء
+      <span class="nav-badge" id="errors-badge" style="display:none">0</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button onclick="toggleMode()" id="mode-btn" style="background:rgba(79,70,229,0.15);border:1px solid var(--border);color:var(--text);padding:8px 20px;border-radius:20px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:600;transition:all 0.3s;width:100%;margin-bottom:8px;">
+      🌙 الوضع الداكن
+    </button>
+    <button onclick="logout()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:6px 20px;border-radius:20px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.82rem;font-weight:600;width:100%;margin-bottom:8px;">
+      🔓 خروج
+    </button>
+    <div>AykoShop v2.1 © 2026</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="topbar">
+      <h1>📊 نظرة عامة</h1>
+      <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="loadOverview()">🔄 تحديث</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card green">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value" id="stat-available">-</div>
+        <div class="stat-label">سلع متاحة</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="stat-sold">-</div>
+        <div class="stat-label">سلع مباعة</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value" id="stat-customers">-</div>
+        <div class="stat-label">زبائن</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon">💬</div>
+        <div class="stat-value" id="stat-messages">-</div>
+        <div class="stat-label">رسائل اليوم</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏷️ الفئات المتاحة</div>
+        </div>
+        <div id="categories-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📅 مبيعات آخر 30 يوم</div>
+        </div>
+        <div id="sales-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div class="page" id="page-products">
+    <div class="topbar">
+      <h1>📦 السلع</h1>
+      <div class="topbar-right">
+        <input class="search-box" placeholder="🔍 بحث في السلع..." oninput="filterProducts(this.value)">
+        <button class="btn btn-primary" onclick="openAddProduct()">+ إضافة سلعة</button>
+      </div>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>صورة</th><th>السلعة</th><th>السعر</th><th>الفئة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+        <tbody id="products-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DEMANDS -->
+  <div class="page" id="page-demands">
+    <div class="topbar">
+      <h1>🔥 الطلبات الشائعة</h1>
+      <div class="period-tabs">
+        <button class="period-tab active" onclick="loadDemands('day',this)">اليوم</button>
+        <button class="period-tab" onclick="loadDemands('week',this)">الأسبوع</button>
+        <button class="period-tab" onclick="loadDemands('month',this)">الشهر</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">أكثر المنتجات طلباً</div></div>
+      <div id="demands-list"></div>
+    </div>
+  </div>
+
+  <!-- AD TRACKING -->
+  <div class="page" id="page-adtracking">
+    <div class="topbar">
+      <h1>📣 تتبع الإعلانات</h1>
+      <div class="topbar-right">
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="loadAdStats('day',this)">اليوم</button>
+          <button class="period-tab" onclick="loadAdStats('week',this)">الأسبوع</button>
+          <button class="period-tab" onclick="loadAdStats('month',this)">الشهر</button>
+        </div>
+        <button class="btn btn-primary" onclick="openAddAdLink()">+ إنشاء رابط</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card blue"><div class="stat-icon">👁️</div><div class="stat-value" id="ad-total-visitors">0</div><div class="stat-label">إجمالي الزوار</div></div>
+      <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value" id="ad-total-revenue">0</div><div class="stat-label">الإيرادات (DH)</div></div>
+      <div class="stat-card purple"><div class="stat-icon">🏆</div><div class="stat-value" id="ad-best-source" style="font-size:1rem">-</div><div class="stat-label">أحسن مصدر</div></div>
+      <div class="stat-card orange"><div class="stat-icon">📱</div><div class="stat-value" id="ad-best-platform" style="font-size:1rem">-</div><div class="stat-label">أحسن منصة</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🏆 أحسن الإعلانات</div></div>
+        <div id="ad-sources-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📱 حسب المنصة</div></div>
+        <div id="ad-platforms-list"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">🔗 روابط الإعلانات</div></div>
+      <div class="alert alert-info">📌 كل إعلان عنده رابط خاص - كي زبون يضغط يتسجل تلقائياً</div>
+      <div id="ad-links-list"></div>
+    </div>
+  </div>
+
+  <!-- CUSTOMERS -->
+  <div class="page" id="page-customers">
+    <div class="topbar">
+      <h1>👥 الزبائن</h1>
+      <input class="search-box" placeholder="🔍 بحث في الزبائن..." oninput="filterCustomers(this.value)">
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>الاسم</th><th>القناة</th><th>المرحلة</th><th>مهتم بـ</th><th>آخر ظهور</th><th>الرسائل</th><th>المحادثة</th></tr></thead>
+        <tbody id="customers-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TRAINING -->
+  <!-- TRAINING -->
+  <div class="page" id="page-training">
+    <div class="topbar">
+      <h1>🧠 تعليم AI</h1>
+    </div>
+    <div class="alert alert-info">💡 زيد سؤال وجواب → AI يتعلم ويجوب به مباشرة. تقدر تكتب سؤال بعدها جواب بعدها سؤال بعدها جواب...</div>
+
+    <div class="grid-2">
+      <!-- Form جديد سهل -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">✏️ إضافة سؤال/جواب</div></div>
+
+        <!-- نوع الرسالة -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button id="type-btn-user" onclick="setMsgType('user')" style="flex:1;padding:12px;border-radius:10px;border:2px solid #166534;background:#052e16;color:#4ade80;cursor:pointer;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.9rem;">
+            👤 سؤال زبون
+          </button>
+          <button id="type-btn-assistant" onclick="setMsgType('assistant')" style="flex:1;padding:12px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.9rem;">
+            🤖 جواب AI
+          </button>
+        </div>
+
+        <div class="form-group">
+          <textarea id="training-msg-text" style="height:100px;width:100%;background:#052e16;border:2px solid #166534;color:#4ade80;padding:12px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.9rem;resize:vertical;" placeholder="👤 اكتب سؤال الزبون... (أخضر = زبون)"></textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <select id="training-category" style="background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:9px 12px;border-radius:8px;font-family:'Cairo',sans-serif;flex:1;">
+            <option value="general">🌐 عام</option>
+            <option value="شراء">🛒 شراء</option>
+            <option value="دفع">💳 دفع</option>
+            <option value="دعم">🛠️ دعم</option>
+          </select>
+          <button class="btn btn-primary" style="flex:2;" onclick="addTrainingMsg()">+ أضف للقائمة</button>
+        </div>
+
+        <!-- قائمة الرسائل المضافة -->
+        <div id="training-preview" style="min-height:80px;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;"></div>
+
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="clearTrainingMsgs()">🗑️ مسح</button>
+          <button class="btn btn-success" style="flex:1;" onclick="saveTrainingMsgs()">💾 حفظ وعلم AI</button>
+        </div>
+      </div>
+
+      <!-- قائمة التعليم -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">📚 المحفوظ</div></div>
+        <div id="training-list" style="max-height:500px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROMPT AI -->
+  <div class="page" id="page-prompt">
+    <div class="topbar">
+      <h1>⚡ Prompt AI - عقل الذكاء</h1>
+      <button class="btn btn-success" onclick="savePrompt()">💾 حفظ</button>
+    </div>
+    <div class="alert alert-info">🧠 هنا تحط عقل AI ديالك - هاد الـ Prompt هو اللي يتحكم فـ كيفاش يهضر AI مع زبائنك</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✏️ System Prompt</div>
+        </div>
+        <textarea id="system-prompt-text" style="width:100%;height:420px;background:#0f1729 !important;border:1px solid var(--border);color:#e2e8f0 !important;padding:14px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.88rem;resize:vertical;line-height:1.9;-webkit-text-fill-color:#e2e8f0;caret-color:#e2e8f0;" placeholder="اكتب هنا System Prompt ديال AI..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn btn-ghost btn-sm" onclick="loadDefaultPrompt()">🔄 استرجع الافتراضي</button>
+          <button class="btn btn-success" style="flex:1;" onclick="savePrompt()">💾 حفظ Prompt</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">💡 نصائح كتابة Prompt مزيان</div></div>
+        <div style="font-size:0.85rem;line-height:1.8;">
+          <div style="padding:10px;background:rgba(79,70,229,0.08);border-radius:10px;margin-bottom:10px;">
+            <strong style="color:var(--primary);">🎯 الأساسيات:</strong><br>
+            <span style="color:var(--text-muted);">• حدد شخصية AI بوضوح<br>• اكتب لغة التواصل (دارجة/فصحى/إنجليزية)<br>• حدد عدد الجمل (جملتين = أحسن)</span>
+          </div>
+          <div style="padding:10px;background:rgba(16,185,129,0.08);border-radius:10px;margin-bottom:10px;">
+            <strong style="color:var(--success);">✅ ما يقولو:</strong><br>
+            <span style="color:var(--text-muted);">• طرق الدفع المتاحة<br>• أسلوب الترحيب<br>• كيفاش يعرض المنتجات</span>
+          </div>
+          <div style="padding:10px;background:rgba(239,68,68,0.08);border-radius:10px;margin-bottom:10px;">
+            <strong style="color:var(--danger);">❌ ما لا يقولو:</strong><br>
+            <span style="color:var(--text-muted);">• لا يقول أنه AI أو بوت<br>• لا يكتب روابط<br>• لا يقول "آسف" أو "ما نقدرش"</span>
+          </div>
+          <div style="padding:10px;background:rgba(245,158,11,0.08);border-radius:10px;">
+            <strong style="color:var(--warning);">⚡ المتغيرات التلقائية:</strong><br>
+            <span style="color:var(--text-muted);">• [PRODUCTS] = قائمة السلع المتاحة<br>• [EXAMPLES] = أمثلة المحادثات<br>• [INSTRUCTION] = التعليمات الديناميكية</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNKNOWN QUESTIONS -->
+  <div class="page" id="page-unknown">
+    <div class="topbar">
+      <h1>❓ أسئلة AI ما عرفش يجوب</h1>
+      <button class="btn btn-ghost btn-sm" onclick="loadUnknown()">🔄 تحديث</button>
+    </div>
+    <div class="alert alert-warning" style="background:rgba(245,158,11,0.1);color:var(--warning);border:1px solid rgba(245,158,11,0.2);">
+      💡 جاوب على سؤال → AI يتعلم منه تلقائياً ويجوب به المرة الجاية
+    </div>
+    <div id="unknown-list"></div>
+  </div>
+
+  <!-- CONVERSATION LIBRARY -->
+  <div class="page" id="page-conversations">
+    <div class="topbar">
+      <h1>💬 مكتبة المحادثات</h1>
+    </div>
+    <div class="alert alert-info">📚 ابني محادثة كاملة → AI يتعلم منها ويجوب بنفس الأسلوب</div>
+
+    <div class="grid-2">
+      <!-- Chat Builder -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔨 بناء محادثة جديدة</div>
+        </div>
+
+        <!-- رسائل المحادثة -->
+        <div id="chat-builder-messages" style="min-height:200px;margin-bottom:12px;"></div>
+
+        <!-- إضافة رسالة -->
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <select id="msg-role" style="background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.85rem;">
+            <option value="user">👤 زبون</option>
+            <option value="assistant">🤖 AI</option>
+          </select>
+          <input id="msg-text" class="search-box" style="flex:1;width:auto;" placeholder="اكتب الرسالة..." onkeydown="if(event.key==='Enter')addBuilderMessage()">
+          <button class="btn btn-primary btn-sm" onclick="addBuilderMessage()">+ زيد</button>
+        </div>
+
+        <!-- حفظ -->
+        <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--border);padding-top:12px;">
+          <input id="builder-name" class="search-box" style="width:100%;" placeholder="📝 اسم المحادثة (مثلاً: محادثة شراء فري فاير ب350)">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="builder-category" style="background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.85rem;">
+              <option value="شراء">🛒 شراء</option>
+              <option value="دفع">💳 دفع</option>
+              <option value="دعم">🛠️ دعم</option>
+              <option value="شحن">📦 شحن</option>
+              <option value="general">🌐 عام</option>
+            </select>
+            <button class="btn btn-success" style="flex:1;" onclick="saveBuilderConversation()">💾 حفظ المحادثة</button>
+            <button class="btn btn-danger btn-sm" onclick="clearBuilder()">🗑️ مسح</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- قائمة المحادثات -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📚 المحادثات المحفوظة</div>
+          <div class="period-tabs">
+            <button class="period-tab active" onclick="filterConvCategory('all',this)">الكل</button>
+            <button class="period-tab" onclick="filterConvCategory('شراء',this)">🛒</button>
+            <button class="period-tab" onclick="filterConvCategory('دفع',this)">💳</button>
+            <button class="period-tab" onclick="filterConvCategory('دعم',this)">🛠️</button>
+            <button class="period-tab" onclick="filterConvCategory('شحن',this)">📦</button>
+          </div>
+        </div>
+        <div id="conversations-list" style="max-height:500px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI CHAT - هضر مع AI وصحح -->
+  <div class="page" id="page-aichat">
+    <div class="topbar">
+      <h1>🤖 هضر مع AI وصحح</h1>
+      <button class="btn btn-ghost btn-sm" onclick="clearChat()">🗑️ مسح</button>
+    </div>
+    <div class="alert alert-info">💡 هضر مع AI وشوف واش يجوب صح - كي يغلط صحح ليه وتعلم</div>
+
+    <div class="grid-2">
+      <!-- محادثة مع AI -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">💬 محادثة مع AI</div></div>
+        <div class="ai-chat-container" id="ai-chat-container" style="height:380px;">
+          <div style="display:flex;justify-content:flex-start;">
+            <div class="chat-bubble assistant">مرحبا! 👋 جرب تكتب أي سؤال كما لو أنت زبون - نشوف كيفاش يجوب AI 😊</div>
+          </div>
+        </div>
+        <div class="ai-typing" id="ai-typing" style="display:none;">⏳ AI يفكر...</div>
+        <div class="ai-input-row" style="margin-top:10px;">
+          <input class="ai-input" id="ai-input" placeholder="اكتب رسالة كالزبون..." onkeydown="if(event.key==='Enter')sendAiMessage()">
+          <button class="btn btn-primary" onclick="sendAiMessage()">إرسال ➤</button>
+        </div>
+      </div>
+
+      <!-- تصحيح الجواب -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">✏️ صحح جواب AI</div></div>
+        <div id="correction-panel">
+          <div class="empty-state" style="padding:30px;">
+            <div class="icon">💬</div>
+            <p>هضر مع AI أولاً ثم صحح هنا</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAILY REPORT -->
+  <div class="page" id="page-report">
+    <div class="topbar">
+      <h1>📈 التقرير اليومي</h1>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="loadReport()">🔄 تحديث</button>
+        <button class="btn btn-ghost btn-sm" onclick="sendReportTelegram()">📱 إرسال Telegram</button>
+      </div>
+    </div>
+
+    <div id="report-loading" class="alert alert-info">⏳ جاري تحميل التقرير...</div>
+
+    <!-- Stats رئيسية -->
+    <div class="stats-grid" id="report-stats" style="display:none;">
+      <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value" id="rep-rev-today">0</div><div class="stat-label">إيرادات اليوم (DH)</div></div>
+      <div class="stat-card blue"><div class="stat-icon">📅</div><div class="stat-value" id="rep-rev-month">0</div><div class="stat-label">إيرادات الشهر (DH)</div></div>
+      <div class="stat-card purple"><div class="stat-icon">📋</div><div class="stat-value" id="rep-orders-today">0</div><div class="stat-label">طلبات اليوم</div></div>
+      <div class="stat-card orange"><div class="stat-icon">📊</div><div class="stat-value" id="rep-conv-rate">0%</div><div class="stat-label">معدل التحويل</div></div>
+    </div>
+
+    <div class="grid-2" id="report-details" style="display:none;">
+      <!-- طلبات اليوم -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 طلبات اليوم</div></div>
+        <div id="rep-orders-breakdown"></div>
+      </div>
+
+      <!-- زبائن -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">👥 الزبائن</div></div>
+        <div id="rep-customers"></div>
+      </div>
+
+      <!-- أكثر منتجات مطلوبة -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">🔥 أكثر منتجات مطلوبة اليوم</div></div>
+        <div id="rep-demands"></div>
+      </div>
+
+      <!-- أحسن زبائن -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">🏆 أحسن زبائن</div></div>
+        <div id="rep-top-customers"></div>
+      </div>
+    </div>
+
+    <!-- إيرادات الأسبوع -->
+    <div class="card" id="rep-week-card" style="display:none;">
+      <div class="card-header"><div class="card-title">📅 مقارنة الإيرادات</div></div>
+      <div id="rep-revenue-compare"></div>
+    </div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="page" id="page-orders">
+    <div class="topbar">
+      <h1>🎮 الطلبات الرقمية</h1>
+      <div class="topbar-right">
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="filterOrders('all',this)">الكل</button>
+          <button class="period-tab" onclick="filterOrders('new',this)">🆕 جديد</button>
+          <button class="period-tab" onclick="filterOrders('contacted',this)">📞 تواصل</button>
+          <button class="period-tab" onclick="filterOrders('confirmed',this)">✅ مؤكد</button>
+          <button class="period-tab" onclick="filterOrders('delivered',this)">🎉 سُلّم</button>
+        </div>
+        <button class="btn btn-primary" onclick="openAddOrder()">+ طلب جديد</button>
+      </div>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
+      <div class="stat-card blue"><div class="stat-icon">📋</div><div class="stat-value" id="ord-total">0</div><div class="stat-label">إجمالي</div></div>
+      <div class="stat-card purple"><div class="stat-icon">🆕</div><div class="stat-value" id="ord-new">0</div><div class="stat-label">جديد</div></div>
+      <div class="stat-card orange"><div class="stat-icon">✅</div><div class="stat-value" id="ord-confirmed">0</div><div class="stat-label">مؤكد</div></div>
+      <div class="stat-card green"><div class="stat-icon">🎉</div><div class="stat-value" id="ord-delivered">0</div><div class="stat-label">سُلّم</div></div>
+      <div class="stat-card orange"><div class="stat-icon">💰</div><div class="stat-value" id="ord-revenue">0</div><div class="stat-label">الإيرادات DH</div></div>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead><tr><th>#</th><th>الزبون</th><th>المنتج الرقمي</th><th>السعر</th><th>القناة</th><th>طريقة الدفع</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th></tr></thead>
+        <tbody id="orders-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- KANBAN -->
+  <div class="page" id="page-kanban">
+    <div class="topbar">
+      <h1>🗂️ Kanban Pipeline</h1>
+      <button class="btn btn-ghost btn-sm" onclick="loadKanban()">🔄 تحديث</button>
+    </div>
+    <div class="kanban-board" id="kanban-board"></div>
+  </div>
+
+  <!-- PIPELINE & SCORING -->
+  <div class="page" id="page-pipeline">
+    <div class="topbar">
+      <h1>🎯 Pipeline & Lead Scoring</h1>
+      <button class="btn btn-ghost btn-sm" onclick="loadPipeline()">🔄 تحديث</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card purple"><div class="stat-icon">🔥</div><div class="stat-value" id="pipe-hot">0</div><div class="stat-label">Hot Leads</div></div>
+      <div class="stat-card blue"><div class="stat-icon">👀</div><div class="stat-value" id="pipe-interested">0</div><div class="stat-label">مهتمين</div></div>
+      <div class="stat-card orange"><div class="stat-icon">🤝</div><div class="stat-value" id="pipe-negotiating">0</div><div class="stat-label">في التفاوض</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="pipe-confirmed">0</div><div class="stat-label">طلبات مؤكدة</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⏰ يحتاجون Follow-up</div>
+        </div>
+        <div id="followup-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏆 أعلى Lead Scores</div>
+        </div>
+        <div id="top-scores-list"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📊 جميع الزبائن مع Scores</div>
+        <input class="search-box" placeholder="🔍 بحث..." oninput="filterScores(this.value)" style="width:180px">
+      </div>
+      <table>
+        <thead><tr><th>الاسم</th><th>Score</th><th>Sentiment</th><th>Pipeline</th><th>آخر نشاط</th><th>Follow-up</th></tr></thead>
+        <tbody id="scores-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BROADCAST -->
+  <div class="page" id="page-broadcast">
+    <div class="topbar">
+      <h1>📢 Broadcast - رسائل جماعية</h1>
+      <button class="btn btn-primary" onclick="openBroadcast()">+ رسالة جديدة</button>
+    </div>
+    <div class="alert alert-info">💡 ابعث رسائل لزبائن محددين من ManyChat مباشرة</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">📝 إنشاء رسالة</div></div>
+        <div class="form-group">
+          <label>عنوان الرسالة *</label>
+          <input id="bc-title" placeholder="مثلاً: عرض فري فاير جديد">
+        </div>
+        <div class="form-group">
+          <label>الرسالة *</label>
+          <textarea id="bc-message" style="height:120px" placeholder="اكتب رسالتك هنا..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>إرسال إلى</label>
+          <select id="bc-target">
+            <option value="all">كل الزبائن</option>
+            <option value="hot">Hot Leads فقط 🔥</option>
+            <option value="warm">Warm Leads فقط 👀</option>
+            <option value="cold">Cold Leads فقط ❄️</option>
+            <option value="followup">يحتاجون Follow-up ⏰</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="saveBroadcast()">💾 حفظ كـ Draft</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 Broadcasts السابقة</div></div>
+        <div id="broadcasts-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API KEYS -->
+  <div class="page" id="page-apikeys">
+    <div class="topbar">
+      <h1>🔑 API مفتوحة</h1>
+    </div>
+
+    <!-- API Key ديالك -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><div class="card-title">🔑 API Key ديالك (AykoShop)</div></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+        <div class="ad-link-box" style="flex:1;">
+          <span id="api-key-display" style="flex:1;font-family:monospace;color:var(--secondary);">••••••••••••••••••••••••••</span>
+          <button class="copy-btn" onclick="toggleApiKey()">👁️ إظهار</button>
+          <button class="copy-btn" onclick="copyApiKey()">📋 نسخ</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input id="new-api-key" class="search-box" style="flex:1;" placeholder="اكتب API Key جديد...">
+        <button class="btn btn-warning" onclick="changeApiKey()">🔄 تغيير</button>
+      </div>
+    </div>
+
+    <!-- APIs خارجية -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><div class="card-title">🔗 APIs منصات خارجية</div></div>
+      <div class="alert alert-info" style="margin-bottom:12px;">📌 احفظ هنا API Keys ديال المنصات باش تستعملهم من Dashboard مباشرة</div>
+
+      <div id="external-apis-list"></div>
+
+      <!-- إضافة API جديد -->
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:10px;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>اسم المنصة *</label>
+            <select id="ext-platform" style="width:100%;background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:10px 12px;border-radius:8px;font-family:'Cairo',sans-serif;">
+              <option value="manychat">🤖 ManyChat</option>
+              <option value="openai">🧠 OpenAI</option>
+              <option value="telegram">📱 Telegram Bot</option>
+              <option value="n8n">⚙️ n8n</option>
+              <option value="other">🌐 أخرى</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>اسم مخصص (اختياري)</label>
+            <input id="ext-name" placeholder="مثلاً: ManyChat الرئيسي">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>API Key / Token *</label>
+          <input id="ext-key" type="password" placeholder="الصق الـ Key هنا...">
+        </div>
+        <button class="btn btn-primary" onclick="saveExternalApi()">💾 حفظ</button>
+      </div>
+    </div>
+
+    <!-- Endpoints -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">📡 Endpoints المتاحة</div></div>
+        <div style="font-size:0.82rem;">
+          <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span class="badge available" style="min-width:40px;text-align:center;">GET</span>
+            <code style="flex:1;font-size:0.78rem;color:var(--secondary);">/api/v1/products</code>
+            <button class="copy-btn" onclick="copyEndpoint('/api/v1/products')">📋</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span class="badge available" style="min-width:40px;text-align:center;">GET</span>
+            <code style="flex:1;font-size:0.78rem;color:var(--secondary);">/api/v1/customers</code>
+            <button class="copy-btn" onclick="copyEndpoint('/api/v1/customers')">📋</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span class="badge available" style="min-width:40px;text-align:center;">GET</span>
+            <code style="flex:1;font-size:0.78rem;color:var(--secondary);">/api/v1/stats</code>
+            <button class="copy-btn" onclick="copyEndpoint('/api/v1/stats')">📋</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span class="badge warm" style="min-width:40px;text-align:center;">POST</span>
+            <code style="flex:1;font-size:0.78rem;color:var(--secondary);">/api/v1/conversations</code>
+            <button class="copy-btn" onclick="copyEndpoint('/api/v1/conversations')">📋</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span class="badge warm" style="min-width:40px;text-align:center;">POST</span>
+            <code style="flex:1;font-size:0.78rem;color:var(--secondary);">/api/v1/webhook/message</code>
+            <button class="copy-btn" onclick="copyEndpoint('/api/v1/webhook/message')">📋</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;padding:8px 0;">
+            <span class="badge available" style="min-width:40px;text-align:center;">GET</span>
+            <code style="flex:1;font-size:0.78rem;color:var(--secondary);">/api/v1/unknown-questions</code>
+            <button class="copy-btn" onclick="copyEndpoint('/api/v1/unknown-questions')">📋</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 مثال ManyChat</div></div>
+        <div style="font-size:0.82rem;">
+          <div style="color:var(--text-muted);margin-bottom:6px;">🤖 External Request URL:</div>
+          <div class="ad-link-box" style="margin-bottom:12px;">
+            <span id="manychat-url" style="font-family:monospace;font-size:0.72rem;color:var(--secondary);flex:1;">http://5.189.170.55:4000/api/v1/webhook/message?api_key=••••</span>
+            <button class="copy-btn" onclick="copyManychatUrl()">📋</button>
+          </div>
+          <div style="color:var(--text-muted);margin-bottom:6px;">🔗 n8n HTTP Request:</div>
+          <div class="ad-link-box" style="margin-bottom:12px;">
+            <span id="example-url" style="font-family:monospace;font-size:0.72rem;color:var(--secondary);flex:1;">http://5.189.170.55:4000/api/v1/products?api_key=••••</span>
+            <button class="copy-btn" onclick="copyExampleUrl()">📋</button>
+          </div>
+          <div style="color:var(--text-muted);margin-bottom:6px;">📦 Body JSON:</div>
+          <div style="background:#0a0e1a;border-radius:8px;padding:10px;font-family:monospace;font-size:0.75rem;color:var(--success);">
+{<br>&nbsp;&nbsp;"subscriber_id": "123456",<br>&nbsp;&nbsp;"message": "بغيت فري فاير",<br>&nbsp;&nbsp;"channel": "whatsapp"<br>}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUSINESS INTELLIGENCE -->
+  <div class="page" id="page-intelligence">
+    <div class="topbar">
+      <h1>💡 Business Intelligence</h1>
+    </div>
+    <div class="alert alert-info">🧠 اسأل AI أسئلة تجارية مبنية على بيانات متجرك الحقيقية</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">💬 اسأل AI</div></div>
+
+        <!-- أسئلة جاهزة -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px;">أسئلة سريعة:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${[
+              'أشنو المنتج الأكثر مبيعاً؟',
+              'أشنو القناة الأحسن؟',
+              'كم زبون جديد هاد الأسبوع؟',
+              'أشنو الزبائن الأكثر شراء؟',
+              'شنو نروّج هاد الأسبوع؟',
+              'أشنو الفرص الضايعة؟'
+            ].map(q => `<button onclick="askIntelligence('${q}')" style="background:rgba(79,70,229,0.15);border:1px solid rgba(79,70,229,0.3);color:var(--primary-light);padding:5px 12px;border-radius:20px;cursor:pointer;font-size:0.78rem;font-family:'Cairo',sans-serif;">${q}</button>`).join('')}
+          </div>
+        </div>
+
+        <div class="ai-input-row" style="margin-bottom:12px;">
+          <input class="ai-input" id="bi-input" placeholder="اكتب سؤالك التجاري..." onkeydown="if(event.key==='Enter')askIntelligence()">
+          <button class="btn btn-primary" onclick="askIntelligence()">إرسال ➤</button>
+        </div>
+
+        <div id="bi-typing" style="display:none;color:var(--text-muted);font-size:0.85rem;padding:8px;">⏳ AI يحلل البيانات...</div>
+        <div id="bi-answer" style="min-height:100px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📊 ملخص تجاري سريع</div></div>
+        <div id="bi-summary">
+          <div class="empty-state"><div class="icon">💡</div><p>اضغط "تحليل" لجلب الملخص</p></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="loadBISummary()">🔄 تحليل البيانات</button>
+      </div>
+    </div>
+
+    <!-- تاريخ الأسئلة -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><div class="card-title">📋 تاريخ الأسئلة</div></div>
+      <div id="bi-history"></div>
+    </div>
+  </div>
+
+  <!-- IMAGE MATCHER -->
+  <div class="page" id="page-imagematch">
+    <div class="topbar">
+      <h1>📸 Image Product Matcher</h1>
+    </div>
+    <div class="alert alert-info">🔍 حط صورة سلعة → AI يطابقها مع inventory ديالك ويقول كاين أولا لا</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">📤 حط صورة</div></div>
+
+        <!-- Upload Zone -->
+        <div id="upload-zone" onclick="document.getElementById('img-upload').click()" style="border:2px dashed var(--border);border-radius:14px;padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:14px;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:3rem;margin-bottom:10px;">📸</div>
+          <div style="color:var(--text-muted);font-size:0.9rem;">اضغط أو اسحب صورة هنا</div>
+          <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px;">JPG, PNG, WebP</div>
+        </div>
+        <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+
+        <!-- Preview -->
+        <div id="img-preview" style="display:none;margin-bottom:14px;">
+          <img id="preview-img" style="width:100%;max-height:250px;object-fit:contain;border-radius:10px;border:1px solid var(--border);">
+        </div>
+
+        <div class="form-group">
+          <label>نوع البحث</label>
+          <select id="match-type" style="width:100%;background:#0a0e1a;border:1px solid var(--border);color:#e2e8f0;padding:10px 12px;border-radius:8px;font-family:'Cairo',sans-serif;">
+            <option value="find">🔍 أبحث عن هاد المنتج عندك</option>
+            <option value="sell">💰 بغيت نبيع هاد المنتج</option>
+            <option value="compare">📊 قارن مع inventory</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;" onclick="analyzeImage()">🔍 تحليل الصورة</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎯 نتيجة التحليل</div></div>
+        <div id="match-result">
+          <div class="empty-state"><div class="icon">🔍</div><p>حط صورة وضغط تحليل</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- سجل التحليلات -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><div class="card-title">📋 سجل التحليلات</div></div>
+      <div id="match-history"></div>
+    </div>
+  </div>
+
+  <!-- WAREHOUSE -->
+  <div class="page" id="page-warehouse">
+    <div class="topbar">
+      <h1>🗄️ Data Warehouse</h1>
+      <button class="btn btn-ghost btn-sm" onclick="loadWarehouse()">🔄 تحديث</button>
+    </div>
+    <div class="alert alert-info">🔍 كل رسائل زبائنك محفوظة هنا - ابحث، فلتر، وحلل</div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="wh-stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px;">
+      <div class="stat-card blue"><div class="stat-icon">💬</div><div class="stat-value" id="wh-total">0</div><div class="stat-label">إجمالي الرسائل</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="wh-purchased">0</div><div class="stat-label">مشتريات</div></div>
+      <div class="stat-card orange"><div class="stat-icon">⏳</div><div class="stat-value" id="wh-pending">0</div><div class="stat-label">قيد التتبع</div></div>
+      <div class="stat-card purple"><div class="stat-icon">👥</div><div class="stat-value" id="wh-customers">0</div><div class="stat-label">زبائن فريدون</div></div>
+      <div class="stat-card orange"><div class="stat-icon">📊</div><div class="stat-value" id="wh-conv-rate">0%</div><div class="stat-label">معدل التحويل</div></div>
+    </div>
+
+    <!-- فلاتر بحث -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><div class="card-title">🔍 بحث ذكي</div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="flex:2;min-width:200px;margin:0;">
+          <input id="wh-search" class="search-box" style="width:100%;" placeholder="🔍 ابحث عن رسالة، زبون، منتج...">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <select id="wh-filter-category" style="background:#0a0e1a;border:1px solid var(--border);color:#e2e8f0;padding:9px 12px;border-radius:8px;font-family:'Cairo',sans-serif;">
+            <option value="all">كل الفئات</option>
+            <option value="free fire">🎮 Free Fire</option>
+            <option value="pubg">🎮 PUBG</option>
+            <option value="netflix">🎬 Netflix</option>
+            <option value="spotify">🎵 Spotify</option>
+            <option value="general">🌐 عام</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <select id="wh-filter-platform" style="background:#0a0e1a;border:1px solid var(--border);color:#e2e8f0;padding:9px 12px;border-radius:8px;font-family:'Cairo',sans-serif;">
+            <option value="all">كل القنوات</option>
+            <option value="whatsapp">📱 WhatsApp</option>
+            <option value="instagram">📸 Instagram</option>
+            <option value="messenger">💬 Messenger</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <select id="wh-filter-result" style="background:#0a0e1a;border:1px solid var(--border);color:#e2e8f0;padding:9px 12px;border-radius:8px;font-family:'Cairo',sans-serif;">
+            <option value="all">كل النتائج</option>
+            <option value="purchased">✅ اشترى</option>
+            <option value="not_purchased">❌ ما اشتراش</option>
+            <option value="pending">⏳ قيد التتبع</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="searchWarehouse()">🔍 بحث</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetWarehouse()">↺ إعادة</button>
+      </div>
+    </div>
+
+    <!-- نتائج البحث -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📋 النتائج <span id="wh-count" style="font-size:0.8rem;color:var(--text-muted);"></span></div>
+      </div>
+      <div id="warehouse-table-container">
+        <table>
+          <thead><tr><th>الزبون</th><th>القناة</th><th>الفئة</th><th>الرسالة</th><th>رد AI</th><th>النتيجة</th><th>التاريخ</th><th>تحديث</th></tr></thead>
+          <tbody id="warehouse-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="grid-2" style="margin-top:16px;">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🏆 أكثر زبائن نشاطاً</div></div>
+        <div id="wh-top-customers"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📊 توزيع حسب الفئة</div></div>
+        <div id="wh-by-category"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI INSIGHTS -->
+  <div class="page" id="page-insights">
+    <div class="topbar">
+      <h1>🔮 AI Insights</h1>
+      <button class="btn btn-primary" onclick="loadInsights()">🔄 تحليل</button>
+    </div>
+    <div class="alert alert-info">🧠 AI يحلل بياناتك تلقائياً ويعطيك insights قابلة للتنفيذ</div>
+
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat-card green"><div class="stat-icon">📊</div><div class="stat-value" id="ins-conv-rate">-</div><div class="stat-label">معدل التحويل</div></div>
+      <div class="stat-card blue"><div class="stat-icon">📱</div><div class="stat-value" id="ins-best-channel">-</div><div class="stat-label">أحسن قناة</div></div>
+      <div class="stat-card orange"><div class="stat-icon">🎯</div><div class="stat-value" id="ins-ready">0</div><div class="stat-label">جاهزون للشراء</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🏆 أفضل المنتجات مبيعاً</div></div>
+        <div id="ins-top-products"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎯 زبائن جاهزون للشراء الآن</div></div>
+        <div id="ins-ready-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">❓ أكثر الأسئلة المجهولة</div></div>
+        <div id="ins-top-questions"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📤 تصدير البيانات</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn btn-primary" onclick="exportData('customers')" style="width:100%;">📥 تصدير الزبائن CSV</button>
+          <button class="btn btn-primary" onclick="exportData('orders')" style="width:100%;">📥 تصدير الطلبات CSV</button>
+          <button class="btn btn-primary" onclick="exportData('conversations')" style="width:100%;">📥 تصدير المحادثات CSV</button>
+        </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <div class="card-title" style="margin-bottom:10px;">📢 Bulk Follow-up</div>
+          <textarea id="bulk-message" style="width:100%;height:80px;background:#0a0e1a;border:1px solid var(--border);color:#e2e8f0;padding:10px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.88rem;" placeholder="اكتب رسالة Follow-up..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <select id="bulk-target" style="flex:1;background:#0a0e1a;border:1px solid var(--border);color:#e2e8f0;padding:8px;border-radius:8px;font-family:'Cairo',sans-serif;">
+              <option value="all">كل Hot + Warm</option>
+              <option value="hot">Hot فقط 🔥</option>
+              <option value="lost">Lost فقط 💤</option>
+            </select>
+            <button class="btn btn-warning" onclick="sendBulkFollowup()">📢 إرسال</button>
+          </div>
+          <div id="bulk-result" style="margin-top:8px;font-size:0.82rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMER SEGMENTS -->
+  <div class="page" id="page-segments">
+    <div class="topbar">
+      <h1>🎯 Customer Segments</h1>
+      <button class="btn btn-ghost btn-sm" onclick="loadSegments()">🔄 تحديث</button>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card purple"><div class="stat-icon">👑</div><div class="stat-value" id="seg-vip">0</div><div class="stat-label">VIP (اشترى +2)</div></div>
+      <div class="stat-card orange"><div class="stat-icon">🔥</div><div class="stat-value" id="seg-hot">0</div><div class="stat-label">Hot (سال ولم يشتري)</div></div>
+      <div class="stat-card red" style="--red:var(--danger);"><div class="stat-icon">💤</div><div class="stat-value" id="seg-lost">0</div><div class="stat-label">Lost (+7 أيام)</div></div>
+      <div class="stat-card green"><div class="stat-icon">🆕</div><div class="stat-value" id="seg-new">0</div><div class="stat-label">جداد اليوم</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">👑 VIP Customers</div></div>
+        <div id="seg-vip-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">💤 Lost Leads - خاصهم Follow-up</div></div>
+        <div id="seg-lost-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOLLOW-UP -->
+  <div class="page" id="page-followups">
+    <div class="topbar">
+      <h1>⏰ Follow-up Needed</h1>
+      <button class="btn btn-ghost btn-sm" onclick="loadFollowUps()">🔄 تحديث</button>
+    </div>
+    <div class="alert alert-warning" style="background:rgba(245,158,11,0.1);color:var(--warning);border:1px solid rgba(245,158,11,0.2);">
+      ⏰ هاد الزبائن وقفو يردو +24 ساعة - خاصهم follow-up
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>الزبون</th><th>القناة</th><th>مهتم بـ</th><th>Score</th><th>منذ</th><th>إجراء</th></tr></thead>
+        <tbody id="followups-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="topbar">
+      <h1>⚙️ الإعدادات</h1>
+    </div>
+
+    <div class="grid-2">
+      <!-- تغيير الباسورد -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">🔑 تغيير كلمة المرور</div></div>
+        <div class="form-group">
+          <label>الباسورد الحالي</label>
+          <input type="password" id="current-pass" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label>الباسورد الجديد</label>
+          <input type="password" id="new-pass" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label>تأكيد الباسورد الجديد</label>
+          <input type="password" id="confirm-pass" placeholder="••••••••">
+        </div>
+        <div id="pass-msg" style="font-size:0.85rem;margin-bottom:10px;display:none;"></div>
+        <button class="btn btn-primary" style="width:100%;" onclick="changePassword()">💾 تغيير الباسورد</button>
+      </div>
+
+      <!-- معلومات الحساب -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">👤 معلومات الحساب</div></div>
+        <div class="form-group">
+          <label>اسم المتجر</label>
+          <input type="text" id="store-name" placeholder="AykoShop">
+        </div>
+        <div class="form-group">
+          <label>الإيميل</label>
+          <input type="email" id="store-email" placeholder="ayoub@example.com">
+        </div>
+        <div class="form-group">
+          <label>رقم WhatsApp</label>
+          <input type="text" id="store-phone" placeholder="212XXXXXXXXX">
+        </div>
+        <div id="account-msg" style="font-size:0.85rem;margin-bottom:10px;display:none;"></div>
+        <button class="btn btn-primary" style="width:100%;" onclick="saveAccountSettings()">💾 حفظ المعلومات</button>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+          <div class="card-title" style="margin-bottom:10px;font-size:0.9rem;">🔓 الجلسة الحالية</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">Token محفوظ - تنتهي بعد 7 أيام</div>
+          <button class="btn btn-danger" style="width:100%;" onclick="logout()">🚪 خروج من الحساب</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERRORS -->
+  <div class="page" id="page-errors">
+    <div class="topbar">
+      <h1>🚨 أخطاء Workflow</h1>
+      <button class="btn btn-ghost btn-sm" onclick="loadErrors()">🔄 تحديث</button>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat-card red"><div class="stat-icon">❌</div><div class="stat-value" id="errors-total">0</div><div class="stat-label">إجمالي الأخطاء</div></div>
+      <div class="stat-card orange"><div class="stat-icon">⏳</div><div class="stat-value" id="errors-pending">0</div><div class="stat-label">غير محلولة</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="errors-resolved">0</div><div class="stat-label">محلولة</div></div>
+    </div>
+    <div id="errors-list"></div>
+  </div>
+
+</div>
+
+<!-- MODALS -->
+
+<!-- Product Modal -->
+<div class="modal" id="modal-product">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-product-title">إضافة سلعة جديدة</div>
+    <input type="hidden" id="product-id">
+    <div class="form-row">
+      <div class="form-group"><label>اسم السلعة *</label><input id="p-name" placeholder="Free Fire Account"></div>
+      <div class="form-group"><label>السعر *</label><input id="p-price" placeholder="350DH"></div>
+    </div>
+    <div class="form-group"><label>الوصف</label><textarea id="p-desc" placeholder="وصف السلعة..."></textarea></div>
+    <div class="form-group"><label>رابط الصورة</label><input id="p-img" placeholder="https://i.imgur.com/..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>الفئة</label><input id="p-cat" placeholder="free fire"></div>
+      <div class="form-group"><label>الحالة</label>
+        <select id="p-status"><option value="available">متاح</option><option value="sold">مباع</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>رابط WhatsApp</label><input id="p-wa"></div>
+      <div class="form-group"><label>رابط Instagram</label><input id="p-ig"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-product')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveProduct()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chat Modal -->
+<div class="modal" id="modal-chat">
+  <div class="modal-box" style="width:600px;">
+    <div class="modal-title" id="chat-title">محادثة الزبون</div>
+    <div class="chat-container" id="chat-container"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-chat')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- Training Modal -->
+<div class="modal" id="modal-training">
+  <div class="modal-box">
+    <div class="modal-title">إضافة سؤال للتعليم</div>
+    <input type="hidden" id="training-id">
+    <div class="form-group"><label>السؤال *</label><input id="t-question" placeholder="مثلاً: بغيت فري فاير"></div>
+    <div class="form-group"><label>الجواب الصحيح *</label><textarea id="t-answer" placeholder="الجواب الذي يجب أن يقوله AI..."></textarea></div>
+    <div class="form-group"><label>الفئة</label>
+      <select id="t-category">
+        <option value="general">عام</option>
+        <option value="sales">مبيعات</option>
+        <option value="support">دعم</option>
+        <option value="payment">دفع</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-training')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveTraining()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Order -->
+<div class="modal" id="modal-order">
+  <div class="modal-box" style="width:520px;">
+    <div class="modal-title" id="modal-order-title">🎮 طلب رقمي جديد</div>
+    <input type="hidden" id="order-id">
+    <div class="form-row">
+      <div class="form-group"><label>اسم الزبون *</label><input id="o-name" placeholder="محمد..."></div>
+      <div class="form-group"><label>رقم الهاتف</label><input id="o-phone" placeholder="0612345678"></div>
+    </div>
+    <div class="form-group"><label>المنتج الرقمي *</label>
+      <input id="o-product" placeholder="مثلاً: Free Fire Account 350DH" list="products-list">
+      <datalist id="products-list"></datalist>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>السعر</label><input id="o-price" placeholder="350DH"></div>
+      <div class="form-group"><label>طريقة الدفع</label>
+        <select id="o-payment" style="width:100%;background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:10px 12px;border-radius:8px;font-family:'Cairo',sans-serif;">
+          <option value="">-- اختار --</option>
+          <option value="CIH">🏦 CIH Bank</option>
+          <option value="Barid">🏦 Barid Bank</option>
+          <option value="CashPlus">💳 Cash Plus</option>
+          <option value="Wafacash">💳 Wafacash</option>
+          <option value="Binance">💰 Binance USDT</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>القناة</label>
+        <select id="o-channel" style="width:100%;background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:10px 12px;border-radius:8px;font-family:'Cairo',sans-serif;">
+          <option value="whatsapp">📱 WhatsApp</option>
+          <option value="instagram">📸 Instagram</option>
+          <option value="messenger">💬 Messenger</option>
+        </select>
+      </div>
+      <div class="form-group"><label>الحالة</label>
+        <select id="o-status" style="width:100%;background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:10px 12px;border-radius:8px;font-family:'Cairo',sans-serif;">
+          <option value="new">🆕 جديد</option>
+          <option value="contacted">📞 تم التواصل</option>
+          <option value="confirmed">✅ مؤكد الدفع</option>
+          <option value="delivered">🎉 تم التسليم</option>
+          <option value="cancelled">❌ ملغي</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>ملاحظات</label><textarea id="o-notes" placeholder="مثلاً: ينتظر screenshot التحويل..." style="height:60px;"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-order')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveOrder()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Answer Unknown Question -->
+<div class="modal" id="modal-answer">
+  <div class="modal-box">
+    <div class="modal-title">✏️ جاوب على السؤال</div>
+    <input type="hidden" id="answer-id">
+    <div class="form-group">
+      <label>سؤال الزبون</label>
+      <div id="answer-question" style="background:#0a0e1a;border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text-muted);font-size:0.9rem;"></div>
+    </div>
+    <div class="form-group">
+      <label>جوابك الصحيح *</label>
+      <textarea id="answer-text" style="height:120px" placeholder="اكتب الجواب الصحيح بالدارجة أو الفصحى أو الإنجليزية..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>تصنيف المحادثة</label>
+      <select id="answer-category">
+        <option value="general">🌐 عام</option>
+        <option value="شراء">🛒 شراء</option>
+        <option value="دفع">💳 دفع</option>
+        <option value="دعم">🛠️ دعم</option>
+        <option value="شحن">📦 شحن</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-answer')">إلغاء</button>
+      <button class="btn btn-success" onclick="submitAnswer()">✅ جاوب + علم AI</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Conversation -->
+<div class="modal" id="modal-conversation">
+  <div class="modal-box">
+    <div class="modal-title">💬 إضافة محادثة للمكتبة</div>
+    <div class="form-group">
+      <label>رسالة الزبون *</label>
+      <input id="conv-question" placeholder="مثلاً: بغيت حساب فري فاير">
+    </div>
+    <div class="form-group">
+      <label>الجواب الصحيح *</label>
+      <textarea id="conv-reply" style="height:100px" placeholder="الجواب اللي خاص يقولو AI..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>التصنيف</label>
+      <select id="conv-category">
+        <option value="شراء">🛒 شراء</option>
+        <option value="دفع">💳 دفع</option>
+        <option value="دعم">🛠️ دعم</option>
+        <option value="شحن">📦 شحن</option>
+        <option value="general">🌐 عام</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-conversation')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveConversation()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ad Link Modal -->
+<div class="modal" id="modal-adlink">
+  <div class="modal-box">
+    <div class="modal-title">🔗 إنشاء رابط إعلان</div>
+    <div class="form-row">
+      <div class="form-group"><label>المنصة *</label>
+        <select id="al-platform">
+          <option value="instagram">Instagram</option>
+          <option value="tiktok">TikTok</option>
+          <option value="facebook">Facebook</option>
+          <option value="youtube">YouTube</option>
+          <option value="telegram">Telegram</option>
+          <option value="influencer">يوتيوبر/مؤثر</option>
+          <option value="other">أخرى</option>
+        </select>
+      </div>
+      <div class="form-group"><label>اسم الحملة *</label><input id="al-campaign" placeholder="freefire_messi"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>رقم WhatsApp *</label><input id="al-phone" value="212"></div>
+      <div class="form-group"><label>رسالة افتراضية</label><input id="al-message" placeholder="مرحبا"></div>
+    </div>
+    <div id="generated-link-box" style="display:none;margin-top:10px;">
+      <label style="font-size:0.82rem;color:var(--text-muted);display:block;margin-bottom:8px;">🔗 الرابط الجاهز:</label>
+      <div class="ad-link-box">
+        <span id="generated-link-text" style="flex:1;"></span>
+        <button class="copy-btn" onclick="copyLink()">📋 نسخ</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-adlink')">إغلاق</button>
+      <button class="btn btn-primary" onclick="generateLink()">🔗 إنشاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://5.189.170.55:4000';
+const TOKEN_KEY = 'ayko_token';
+
+// ==================== AUTH SYSTEM ====================
+function getToken() { return localStorage.getItem(TOKEN_KEY); }
+function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+async function checkAuth() {
+  const token = getToken();
+  if (!token) { showLoginPage(); return false; }
+  // token local = مقبول
+  if (token.startsWith('local_token_')) { hideLoginPage(); return true; }
+  try {
+    const r = await fetch(API + '/api/auth/verify', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (r.ok) { hideLoginPage(); return true; }
+    else { clearToken(); showLoginPage(); return false; }
+  } catch(e) {
+    // API مش متوفرة - نقبل token موجود
+    hideLoginPage(); return true;
+  }
+}
+
+function showLoginPage() {
+  document.getElementById('login-page').style.display = 'flex';
+  document.querySelector('.sidebar').style.display = 'none';
+  document.querySelector('.main').style.display = 'none';
+}
+
+function hideLoginPage() {
+  document.getElementById('login-page').style.display = 'none';
+  document.querySelector('.sidebar').style.display = 'flex';
+  document.querySelector('.main').style.display = 'block';
+}
+
+async function doLogin() {
+  const password = document.getElementById('login-password').value;
+  if (!password) return;
+  const errDiv = document.getElementById('login-error');
+  errDiv.style.display = 'none';
+
+  // نجيب الباسورد المحفوظ
+  const savedPass = localStorage.getItem('ayko_password') || 'ayko2026';
+
+  try {
+    const r = await fetch(API + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    if (r.ok) {
+      const data = await r.json();
+      setToken(data.token);
+      hideLoginPage();
+      loadOverview();
+    } else {
+      // نتحقق من الباسورد المحلي
+      if (password === savedPass) {
+        setToken('local_token_' + Date.now());
+        hideLoginPage();
+        loadOverview();
+      } else {
+        errDiv.textContent = '❌ كلمة المرور غلط!';
+        errDiv.style.display = 'block';
+        document.getElementById('login-password').value = '';
+      }
+    }
+  } catch(e) {
+    // API مش متوفرة - نتحقق محلياً
+    if (password === savedPass) {
+      setToken('local_token_' + Date.now());
+      hideLoginPage();
+      loadOverview();
+    } else {
+      errDiv.textContent = '❌ كلمة المرور غلط!';
+      errDiv.style.display = 'block';
+      document.getElementById('login-password').value = '';
+    }
+  }
+}
+
+function logout() { clearToken(); showLoginPage(); }
+
+const OPENAI_KEY = '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';
+let allProducts = [], allCustomers = [], aiHistory = [];
+
+async function api(path, method='GET', body=null) {
+  try {
+    const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (getToken()||'') } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(API + path, opts);
+    if (r.status === 401) { clearToken(); showLoginPage(); return null; }
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+// RESET PASSWORD - من DB
+function showResetPage() {
+  document.getElementById('reset-panel').style.display = 'block';
+  document.getElementById('reset-msg').style.display = 'none';
+}
+
+function hideResetPage() {
+  document.getElementById('reset-panel').style.display = 'none';
+  document.getElementById('reset-email').value = '';
+  document.getElementById('reset-new-pass').value = '';
+}
+
+async function resetPassword() {
+  const email = document.getElementById('reset-email').value.trim();
+  const newPass = document.getElementById('reset-new-pass').value;
+  const msg = document.getElementById('reset-msg');
+  if (newPass.length < 4) { msg.textContent='❌ الباسورد قصير!'; msg.style.color='#ef4444'; msg.style.display='block'; return; }
+  try {
+    const r = await fetch(API + '/api/settings/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, new_password: newPass })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      msg.textContent = '✅ تم تغيير الباسورد! يمكنك الدخول الآن';
+      msg.style.color = '#10b981'; msg.style.display = 'block';
+      document.getElementById('reset-new-pass').value = '';
+      setTimeout(() => { hideResetPage(); }, 2000);
+    } else {
+      msg.textContent = '❌ ' + (data.error || 'الإيميل غلط!');
+      msg.style.color = '#ef4444'; msg.style.display = 'block';
+    }
+  } catch(e) {
+    // Fallback محلي كي API مش متوفرة
+    msg.textContent = '⚠️ تحقق من الاتصال بالـ Server';
+    msg.style.color = '#f59e0b'; msg.style.display = 'block';
+  }
+}
+
+// DARK / LIGHT MODE
+function toggleMode() {
+  const body = document.body;
+  const btn = document.getElementById('mode-btn');
+  const isLight = body.classList.toggle('light');
+  btn.textContent = isLight ? '🌙 الوضع الداكن' : '☀️ الوضع الفاتح';
+  localStorage.setItem('ayko_mode', isLight ? 'light' : 'dark');
+}
+
+// Load saved mode
+const savedMode = localStorage.getItem('ayko_mode');
+if (savedMode === 'light') {
+  document.body.classList.add('light');
+  window.addEventListener('load', () => {
+    const btn = document.getElementById('mode-btn');
+    if (btn) btn.textContent = '🌙 الوضع الداكن';
+  });
+}
+
+// AVATAR
+function changeAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('avatar-img');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('avatar-letter').style.display = 'none';
+    localStorage.setItem('ayko_avatar', e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+// Load saved avatar
+const savedAvatar = localStorage.getItem('ayko_avatar');
+if (savedAvatar) {
+  window.addEventListener('load', () => {
+    const img = document.getElementById('avatar-img');
+    img.src = savedAvatar; img.style.display = 'block';
+    document.getElementById('avatar-letter').style.display = 'none';
+  });
+}
+
+async function api(path, method='GET', body=null) {
+  try {
+    const opts = { method, headers: {'Content-Type':'application/json'} };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(API+path, opts);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (el) el.classList.add('active');
+  const loaders = {overview:loadOverview, products:loadProducts, demands:()=>loadDemands('week'), adtracking:()=>loadAdStats('month'), customers:loadCustomers, training:loadTraining, errors:loadErrors, pipeline:loadPipeline, broadcast:loadBroadcasts, unknown:loadUnknown, conversations:loadConversations, apikeys:()=>renderExternalApis(), orders:loadOrders, kanban:loadKanban, prompt:loadPromptPage, report:loadReport, intelligence:()=>{renderBIHistory();loadBISummary();}, imagematch:()=>renderMatchHistory(), warehouse:loadWarehouse, segments:loadSegments, followups:loadFollowUps, insights:loadInsights, settings:loadSettings};
+  if (loaders[name]) loaders[name]();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ======= OVERVIEW =======
+async function loadOverview() {
+  const [s, orders] = await Promise.all([api('/api/stats'), api('/api/orders')]);
+  if (!s) return;
+  document.getElementById('stat-available').textContent = s.available;
+  document.getElementById('stat-sold').textContent = s.sold;
+  document.getElementById('stat-customers').textContent = s.customers;
+  document.getElementById('stat-messages').textContent = s.messages_today;
+
+  // Revenue حقيقي من Orders
+  const today = new Date();
+  const revenueToday = (orders||[]).filter(o => {
+    return o.status === 'delivered' && new Date(o.created_at).toDateString() === today.toDateString();
+  }).reduce((s,o) => s + (parseInt((o.price||'0').replace(/[^0-9]/g,''))||0), 0);
+
+  const revenueMonth = (orders||[]).filter(o => {
+    return o.status === 'delivered' && new Date(o.created_at).getMonth() === today.getMonth();
+  }).reduce((s,o) => s + (parseInt((o.price||'0').replace(/[^0-9]/g,''))||0), 0);
+
+  const ordersToday = (orders||[]).filter(o => new Date(o.created_at).toDateString() === today.toDateString()).length;
+
+  // نزيد Revenue cards فـ stats grid
+  document.getElementById('stat-available').textContent = s.available;
+  document.getElementById('stat-sold').textContent = revenueToday + ' DH';
+  document.getElementById('stat-customers').textContent = s.customers;
+  document.getElementById('stat-messages').textContent = s.messages_today;
+
+  // Labels
+  const labels = document.querySelectorAll('.stat-card .label');
+  if (labels[1]) labels[1].textContent = 'إيرادات اليوم';
+
+  document.getElementById('categories-list').innerHTML = `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span>💰 إيرادات اليوم</span><span style="color:var(--success);font-weight:700;">${revenueToday} DH</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span>📅 إيرادات الشهر</span><span style="color:var(--primary);font-weight:700;">${revenueMonth} DH</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span>📋 طلبات اليوم</span><span style="color:var(--warning);font-weight:700;">${ordersToday}</span>
+    </div>
+    ${s.top_categories?.map(c => `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span>${c.category||'غير محدد'}</span><span class="badge available">${c.total}</span>
+    </div>`).join('')||''}`;
+
+  const salesChart = document.getElementById('sales-chart');
+  if (s.sales_by_day?.length) {
+    const max = Math.max(...s.sales_by_day.map(d=>parseInt(d.count)));
+    salesChart.innerHTML = s.sales_by_day.slice(0,10).map(d =>
+      `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:0.78rem;color:var(--text-muted);width:70px;">${d.date?.substring(5)||''}</span>
+        <div style="flex:1;height:8px;background:var(--border);border-radius:4px;">
+          <div style="width:${(parseInt(d.count)/max)*100}%;height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:4px;"></div>
+        </div>
+        <span style="font-size:0.78rem;color:var(--success);min-width:20px;">${d.count}</span>
+      </div>`).join('');
+  } else {
+    salesChart.innerHTML = '<div class="empty-state"><div class="icon">📈</div><p>لا توجد مبيعات بعد</p></div>';
+  }
+}
+
+// ======= PRODUCTS =======
+async function loadProducts() {
+  allProducts = await api('/api/products') || [];
+  renderProducts(allProducts);
+}
+
+function renderProducts(products) {
+  const tb = document.getElementById('products-table');
+  if (!products.length) { tb.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="icon">📦</div><p>لا توجد سلع</p></div></td></tr>'; return; }
+  tb.innerHTML = products.map(p => `
+    <tr>
+      <td><img src="${p.image_url||''}" class="img-thumb" onerror="this.style.display='none'"></td>
+      <td><strong style="color:#fff">${p.product_name}</strong><br><small style="color:var(--text-muted)">${p.description?.substring(0,40)||''}</small></td>
+      <td><strong style="color:var(--warning)">${p.price}</strong></td>
+      <td><span class="badge available">${p.category||'-'}</span></td>
+      <td><span class="badge ${p.status}">${p.status==='available'?'متاح':'مباع'}</span></td>
+      <td style="display:flex;gap:6px;align-items:center;">
+        <button class="btn btn-warning btn-sm" onclick="editProduct(${p.id})">✏️</button>
+        ${p.status==='available'?`<button class="btn btn-success btn-sm" onclick="markSold(${p.id})">✅</button>`:''}
+        <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterProducts(q) {
+  renderProducts(allProducts.filter(p =>
+    p.product_name?.toLowerCase().includes(q.toLowerCase()) ||
+    p.category?.toLowerCase().includes(q.toLowerCase()) ||
+    p.price?.includes(q)));
+}
+
+function openAddProduct() {
+  document.getElementById('product-id').value='';
+  document.getElementById('modal-product-title').textContent='إضافة سلعة جديدة';
+  ['p-name','p-price','p-desc','p-img','p-cat','p-wa','p-ig'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-status').value='available';
+  document.getElementById('modal-product').classList.add('open');
+}
+
+function editProduct(id) {
+  const p = allProducts.find(x=>x.id===id);
+  if (!p) return;
+  document.getElementById('product-id').value=id;
+  document.getElementById('modal-product-title').textContent='تعديل السلعة';
+  document.getElementById('p-name').value=p.product_name||'';
+  document.getElementById('p-price').value=p.price||'';
+  document.getElementById('p-desc').value=p.description||'';
+  document.getElementById('p-img').value=p.image_url||'';
+  document.getElementById('p-cat').value=p.category||'';
+  document.getElementById('p-status').value=p.status||'available';
+  document.getElementById('p-wa').value=p.whatsapp_url||'';
+  document.getElementById('p-ig').value=p.instagram_url||'';
+  document.getElementById('modal-product').classList.add('open');
+}
+
+async function saveProduct() {
+  const id = document.getElementById('product-id').value;
+  const data = {
+    product_name:document.getElementById('p-name').value,
+    price:document.getElementById('p-price').value,
+    description:document.getElementById('p-desc').value,
+    image_url:document.getElementById('p-img').value,
+    category:document.getElementById('p-cat').value,
+    status:document.getElementById('p-status').value,
+    whatsapp_url:document.getElementById('p-wa').value,
+    instagram_url:document.getElementById('p-ig').value
+  };
+  if (!data.product_name||!data.price) return alert('اسم السلعة والسعر مطلوبان!');
+  if (id) await api(`/api/products/${id}`,'PUT',data);
+  else await api('/api/products/add','POST',data);
+  closeModal('modal-product');
+  loadProducts();
+}
+
+async function deleteProduct(id) {
+  if (!confirm('تأكد الحذف؟')) return;
+  await api(`/api/products/${id}`,'DELETE');
+  loadProducts();
+}
+
+async function markSold(id) {
+  if (!confirm('تأكد تعليم كمباع؟')) return;
+  await api(`/api/products/${id}/sold`,'PATCH');
+  loadProducts();
+}
+
+// ======= DEMANDS =======
+async function loadDemands(period, btn=null) {
+  if (btn) { document.querySelectorAll('#page-demands .period-tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
+  const data = await api(`/api/demands?period=${period}`);
+  const list = document.getElementById('demands-list');
+  if (!data?.demands?.length) { list.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>لا توجد طلبات في هذه الفترة</p></div>'; return; }
+  const max = Math.max(...data.demands.map(d=>d.count));
+  list.innerHTML = data.demands.map((d,i) => {
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    return `<div class="demand-item">
+      <span class="rank-badge ${rankClass}">${i+1}</span>
+      <span style="min-width:100px;font-weight:600;">${d.product}</span>
+      <div class="demand-bar-bg"><div class="demand-bar" style="width:${(d.count/max)*100}%"></div></div>
+      <span style="color:var(--warning);font-weight:700;min-width:40px;text-align:center">${d.count}</span>
+    </div>`;
+  }).join('');
+}
+
+// ======= AD TRACKING =======
+async function loadAdStats(period, btn=null) {
+  if (btn) { document.querySelectorAll('#page-adtracking .period-tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
+  const data = await api(`/api/ad-stats?period=${period}`);
+  if (data?.totals) {
+    document.getElementById('ad-total-visitors').textContent = data.totals.total_visitors||0;
+    document.getElementById('ad-total-revenue').textContent = parseFloat(data.totals.total_revenue||0).toFixed(0);
+  }
+  if (data?.by_source?.length) document.getElementById('ad-best-source').textContent = data.by_source[0]?.ad_source||'-';
+  if (data?.by_platform?.length) document.getElementById('ad-best-platform').textContent = data.by_platform[0]?.ad_platform||'-';
+
+  const sourcesList = document.getElementById('ad-sources-list');
+  sourcesList.innerHTML = data?.by_source?.length
+    ? data.by_source.map((d,i) => {
+        const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+        return `<div class="demand-item">
+          <span class="rank-badge ${rankClass}">${i+1}</span>
+          <div style="flex:1;margin:0 10px;">
+            <div style="font-weight:600;">${d.ad_source}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">${d.ad_campaign||''}</div>
+          </div>
+          <div style="text-align:center;min-width:55px;"><div style="color:var(--secondary);font-weight:700;">${d.visitors}</div><div style="font-size:0.7rem;color:var(--text-muted);">زائر</div></div>
+          <div style="text-align:center;min-width:65px;"><div style="color:var(--success);font-weight:700;">${parseFloat(d.revenue||0).toFixed(0)} DH</div></div>
+        </div>`;
+      }).join('')
+    : '<div class="empty-state"><div class="icon">📣</div><p>لا توجد بيانات إعلانات بعد</p></div>';
+
+  const platformsList = document.getElementById('ad-platforms-list');
+  platformsList.innerHTML = data?.by_platform?.length
+    ? data.by_platform.map(d =>
+        `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+          <span class="badge ${d.ad_platform}">${d.ad_platform}</span>
+          <span style="color:var(--secondary);font-weight:700;">${d.visitors} زائر</span>
+          <span style="color:var(--success);">${parseFloat(d.revenue||0).toFixed(0)} DH</span>
+        </div>`).join('')
+    : '<div class="empty-state"><div class="icon">📱</div><p>لا توجد بيانات</p></div>';
+
+  renderAdLinks();
+}
+
+const SAVED_LINKS_KEY = 'ayko_ad_links';
+function getSavedLinks() { try { return JSON.parse(localStorage.getItem(SAVED_LINKS_KEY)||'[]'); } catch(e) { return []; } }
+function saveLink(link) { const l=getSavedLinks(); l.unshift(link); localStorage.setItem(SAVED_LINKS_KEY, JSON.stringify(l.slice(0,50))); }
+
+function renderAdLinks() {
+  const links = getSavedLinks();
+  const c = document.getElementById('ad-links-list');
+  if (!links.length) { c.innerHTML = '<div class="empty-state"><div class="icon">🔗</div><p>اضغط "+ إنشاء رابط" لإنشاء رابط إعلان</p></div>'; return; }
+  c.innerHTML = `<table><thead><tr><th>المنصة</th><th>الحملة</th><th>الرابط</th><th>التاريخ</th></tr></thead><tbody>
+    ${links.map(l=>`<tr>
+      <td><span class="badge ${l.platform}">${l.platform}</span></td>
+      <td>${l.campaign}</td>
+      <td><div class="ad-link-box"><span style="flex:1;font-size:0.75rem;">${l.url}</span><button class="copy-btn" onclick="copyText('${l.url}')">📋</button></div></td>
+      <td style="color:var(--text-muted);font-size:0.8rem;">${l.created}</td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+function openAddAdLink() { document.getElementById('generated-link-box').style.display='none'; document.getElementById('modal-adlink').classList.add('open'); }
+
+function generateLink() {
+  const platform=document.getElementById('al-platform').value;
+  const campaign=document.getElementById('al-campaign').value;
+  const phone=document.getElementById('al-phone').value;
+  const message=document.getElementById('al-message').value||'مرحبا';
+  if (!campaign||!phone) return alert('الحملة ورقم الهاتف مطلوبان!');
+  const adSource=`${platform}_${campaign}`;
+  const url=`https://wa.me/${phone}?text=${encodeURIComponent(`${message}&ref=${adSource}`)}`;
+  document.getElementById('generated-link-text').textContent=url;
+  document.getElementById('generated-link-box').style.display='block';
+  saveLink({platform,campaign:adSource,url,created:new Date().toLocaleDateString('ar')});
+  renderAdLinks();
+}
+
+function copyLink() { copyText(document.getElementById('generated-link-text').textContent); }
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(()=>alert('✅ تم النسخ!')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=text;
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta); alert('✅ تم النسخ!');
+  });
+}
+
+// ======= CUSTOMERS =======
+async function loadCustomers() {
+  allCustomers = await api('/api/customers') || [];
+  renderCustomers(allCustomers);
+}
+
+function renderCustomers(customers) {
+  const tb = document.getElementById('customers-table');
+  if (!customers.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">👥</div><p>لا يوجد زبائن</p></div></td></tr>'; return; }
+  tb.innerHTML = customers.map(c => `
+    <tr>
+      <td><strong style="color:#fff">${c.customer_name||'غير معروف'}</strong></td>
+      <td><span class="badge available">${c.channel||'-'}</span></td>
+      <td><span class="badge ${c.stage||'cold'}">${c.stage||'-'}</span></td>
+      <td>${c.interested_in||'-'}</td>
+      <td style="font-size:0.8rem;color:var(--text-muted)">${c.last_seen?new Date(c.last_seen).toLocaleDateString('ar'):'-'}</td>
+      <td>${c.total_messages||0}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="openChat('${c.subscriber_id}','${c.customer_name||'زبون'}')">💬</button></td>
+    </tr>`).join('');
+}
+
+function filterCustomers(q) {
+  renderCustomers(allCustomers.filter(c =>
+    c.customer_name?.toLowerCase().includes(q.toLowerCase()) ||
+    c.interested_in?.toLowerCase().includes(q.toLowerCase()) ||
+    c.channel?.toLowerCase().includes(q.toLowerCase())));
+}
+
+async function openChat(id, name) {
+  document.getElementById('chat-title').textContent=`محادثة ${name}`;
+  document.getElementById('modal-chat').classList.add('open');
+  const history = await api(`/api/customers/${id}/history`) || [];
+  const c = document.getElementById('chat-container');
+  c.innerHTML = history.map(h =>
+    `<div style="display:flex;justify-content:${h.role==='user'?'flex-end':'flex-start'}">
+      <div class="chat-bubble ${h.role}">
+        ${h.message}
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px">${new Date(h.created_at).toLocaleTimeString('ar')}</div>
+      </div>
+    </div>`).join('');
+  c.scrollTop = c.scrollHeight;
+}
+
+// ======= TRAINING =======
+async function loadTraining() {
+  const data = await api('/api/training') || [];
+  const list = document.getElementById('training-list');
+  if (!data.length) { list.innerHTML = '<div class="empty-state"><div class="icon">🧠</div><p>لا توجد بيانات تعليم بعد</p></div>'; return; }
+  list.innerHTML = data.map(t => `
+    <div class="training-item ${t.approved?'approved':'pending'}">
+      <div class="training-q">❓ ${t.question}</div>
+      <div class="training-a">✅ ${t.correct_answer}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <span class="badge ${t.approved?'available':'warm'}">${t.approved?'معتمد':'قيد المراجعة'}</span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">${t.category}</span>
+        <div style="margin-right:auto;display:flex;gap:6px">
+          ${!t.approved?`<button class="btn btn-success btn-sm" onclick="approveTraining(${t.id})">✅ اعتماد</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="deleteTraining(${t.id})">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openAddTraining() {
+  ['training-id','t-question','t-answer'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('t-category').value='general';
+  document.getElementById('modal-training').classList.add('open');
+}
+
+async function saveTraining() {
+  const data = { question:document.getElementById('t-question').value, correct_answer:document.getElementById('t-answer').value, category:document.getElementById('t-category').value };
+  if (!data.question||!data.correct_answer) return alert('السؤال والجواب مطلوبان!');
+  await api('/api/training','POST',data);
+  closeModal('modal-training');
+  loadTraining();
+}
+
+async function approveTraining(id) { await api(`/api/training/${id}`,'PUT',{approved:true}); loadTraining(); }
+async function deleteTraining(id) { if (!confirm('تأكد؟')) return; await api(`/api/training/${id}`,'DELETE'); loadTraining(); }
+
+// ======= AI CHAT =======
+async function sendAiMessage() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const container = document.getElementById('ai-chat-container');
+
+  // إضافة رسالة المستخدم
+  container.innerHTML += `
+    <div style="display:flex;justify-content:flex-end">
+      <div class="chat-bubble user">${msg}</div>
+    </div>`;
+  container.scrollTop = container.scrollHeight;
+
+  // إظهار typing
+  document.getElementById('ai-typing').classList.add('show');
+
+  aiHistory.push({role:'user', content: msg});
+
+  try {
+    // نجيب stats المتجر
+    const stats = await api('/api/stats');
+    const products = await api('/api/products');
+    const available = products?.filter(p=>p.status==='available') || [];
+
+    const systemPrompt = `أنت مساعد ذكي لـ AykoShop متخصص في المنتجات الرقمية.
+بيانات المتجر الحالية:
+- سلع متاحة: ${stats?.available||0}
+- سلع مباعة: ${stats?.sold||0}
+- زبائن: ${stats?.customers||0}
+- رسائل اليوم: ${stats?.messages_today||0}
+- المنتجات: ${available.map(p=>`${p.product_name} ب${p.price}`).join(', ')||'لا يوجد'}
+
+أجب بالعربية (دريجة أو فصحى حسب السؤال). كن مفيداً ومحترفاً.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: aiHistory
+      })
+    });
+
+    const data = await response.json();
+    const reply = data.content?.[0]?.text || 'عذراً، حدث خطأ. حاول مرة أخرى.';
+
+    aiHistory.push({role:'assistant', content: reply});
+
+    document.getElementById('ai-typing').classList.remove('show');
+    container.innerHTML += `
+      <div style="display:flex;justify-content:flex-start">
+        <div class="chat-bubble assistant">${reply.replace(/\n/g,'<br>')}</div>
+      </div>`;
+    container.scrollTop = container.scrollHeight;
+
+  } catch(e) {
+    document.getElementById('ai-typing').classList.remove('show');
+    container.innerHTML += `<div style="display:flex;justify-content:flex-start"><div class="chat-bubble assistant">عذراً، حدث خطأ في الاتصال.</div></div>`;
+  }
+}
+
+function clearChat() {
+  aiHistory = [];
+  document.getElementById('ai-chat-container').innerHTML = `
+    <div style="display:flex;justify-content:flex-start;">
+      <div class="chat-bubble assistant">مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟</div>
+    </div>`;
+}
+
+// ======= DAILY REPORT =======
+async function loadReport() {
+  document.getElementById('report-loading').style.display = 'block';
+  document.getElementById('report-stats').style.display = 'none';
+  document.getElementById('report-details').style.display = 'none';
+  document.getElementById('rep-week-card').style.display = 'none';
+
+  try {
+    const r = await fetch('https://ayoubakarfi.app.n8n.cloud/webhook/aykoshop-daily-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request: 'report' })
+    });
+    const data = await r.json();
+
+    document.getElementById('report-loading').style.display = 'none';
+    document.getElementById('report-stats').style.display = 'grid';
+    document.getElementById('report-details').style.display = 'grid';
+    document.getElementById('rep-week-card').style.display = 'block';
+
+    // Stats
+    document.getElementById('rep-rev-today').textContent = data.revenue_today || 0;
+    document.getElementById('rep-rev-month').textContent = data.revenue_month || 0;
+    document.getElementById('rep-orders-today').textContent = data.orders_today || 0;
+    document.getElementById('rep-conv-rate').textContent = (data.conversion_rate || 0) + '%';
+
+    // طلبات اليوم
+    document.getElementById('rep-orders-breakdown').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${[
+          ['🆕 جديدة', data.orders_new||0, '#94a3b8'],
+          ['✅ مؤكدة', data.orders_confirmed||0, 'var(--primary)'],
+          ['🎉 مُسلَّمة', data.orders_delivered||0, 'var(--success)'],
+        ].map(([label, val, color]) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;">
+            <span>${label}</span>
+            <span style="font-weight:700;font-size:1.2rem;color:${color};">${val}</span>
+          </div>`).join('')}
+      </div>`;
+
+    // زبائن
+    document.getElementById('rep-customers').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${[
+          ['👥 إجمالي الزبائن', data.total_customers||0, 'var(--secondary)'],
+          ['🆕 جداد اليوم', data.new_customers_today||0, 'var(--success)'],
+          ['💬 رسائل اليوم', data.messages_today||0, 'var(--primary)'],
+          ['📦 سلع متاحة', data.available_products||0, 'var(--warning)'],
+        ].map(([label, val, color]) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;">
+            <span>${label}</span>
+            <span style="font-weight:700;font-size:1.1rem;color:${color};">${val}</span>
+          </div>`).join('')}
+      </div>`;
+
+    // طلبات شائعة
+    const demands = data.top_demands || [];
+    const maxDemand = Math.max(...demands.map(d=>d.count), 1);
+    document.getElementById('rep-demands').innerHTML = demands.length ? demands.map((d,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.85rem;color:var(--text-muted);min-width:20px;">${i+1}</span>
+        <span style="flex:1;font-weight:600;">${d.product}</span>
+        <div style="flex:1;height:6px;background:var(--border);border-radius:3px;">
+          <div style="width:${(d.count/maxDemand)*100}%;height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:3px;"></div>
+        </div>
+        <span style="color:var(--warning);font-weight:700;min-width:30px;">${d.count}</span>
+      </div>`).join('') :
+      '<div class="empty-state"><div class="icon">🔍</div><p>لا توجد طلبات اليوم</p></div>';
+
+    // أحسن زبائن
+    const topCustomers = data.top_customers || [];
+    document.getElementById('rep-top-customers').innerHTML = topCustomers.length ? topCustomers.map((c,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1.2rem;">${i===0?'🥇':i===1?'🥈':'🥉'}</span>
+        <span style="flex:1;font-weight:600;">${c.name||'زبون'}</span>
+        <span style="color:var(--warning);font-weight:700;">${c.revenue} DH</span>
+      </div>`).join('') :
+      '<div class="empty-state"><div class="icon">👥</div><p>لا توجد بيانات</p></div>';
+
+    // مقارنة إيرادات
+    document.getElementById('rep-revenue-compare').innerHTML = `
+      <div style="display:flex;gap:20px;">
+        ${[
+          ['اليوم', data.revenue_today||0, 'var(--secondary)'],
+          ['الأسبوع', data.revenue_week||0, 'var(--primary)'],
+          ['الشهر', data.revenue_month||0, 'var(--success)'],
+        ].map(([period, val, color]) => `
+          <div style="flex:1;text-align:center;padding:16px;background:rgba(255,255,255,0.04);border-radius:12px;">
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px;">${period}</div>
+            <div style="font-size:1.6rem;font-weight:800;color:${color};">${val}</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);">DH</div>
+          </div>`).join('')}
+      </div>`;
+
+  } catch(e) {
+    document.getElementById('report-loading').innerHTML = '<div class="alert alert-warning">⚠️ فشل تحميل التقرير - تحقق من n8n</div>';
+  }
+}
+
+async function sendReportTelegram() {
+  try {
+    await fetch('https://ayoubakarfi.app.n8n.cloud/webhook/aykoshop-daily-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ send_telegram: true })
+    });
+    alert('✅ تم إرسال التقرير على Telegram!');
+  } catch(e) {
+    alert('❌ فشل الإرسال');
+  }
+}
+
+// ======= ORDERS =======
+let allOrders = [];
+const ORDER_STATUSES = {
+  new: { label: '🆕 جديد', color: '#94a3b8' },
+  contacted: { label: '📞 تواصل', color: 'var(--secondary)' },
+  confirmed: { label: '✅ مؤكد الدفع', color: 'var(--primary)' },
+  delivered: { label: '🎉 تم التسليم', color: 'var(--success)' },
+  cancelled: { label: '❌ ملغي', color: 'var(--danger)' }
+};
+
+async function loadOrders() {
+  allOrders = await api('/api/orders') || [];
+  renderOrderStats(allOrders);
+  renderOrders(allOrders);
+  // badge
+  const newOrders = allOrders.filter(o => o.status === 'new').length;
+  const badge = document.getElementById('orders-badge');
+  if (newOrders > 0) { badge.textContent = newOrders; badge.style.display = 'inline-block'; }
+  else badge.style.display = 'none';
+}
+
+function renderOrderStats(orders) {
+  document.getElementById('ord-total').textContent = orders.length;
+  document.getElementById('ord-new').textContent = orders.filter(o=>o.status==='new').length;
+  document.getElementById('ord-confirmed').textContent = orders.filter(o=>o.status==='confirmed').length;
+  document.getElementById('ord-delivered').textContent = orders.filter(o=>o.status==='delivered').length;
+  const revenue = orders.filter(o=>o.status==='delivered').reduce((sum,o) => {
+    const price = parseInt((o.price||'0').replace(/[^0-9]/g,'')) || 0;
+    return sum + price;
+  }, 0);
+  document.getElementById('ord-revenue').textContent = revenue;
+}
+
+function filterOrders(status, btn) {
+  document.querySelectorAll('#page-orders .period-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = status === 'all' ? allOrders : allOrders.filter(o=>o.status===status);
+  renderOrders(filtered);
+}
+
+function renderOrders(orders) {
+  const tb = document.getElementById('orders-table');
+  if (!orders.length) { tb.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="icon">🎮</div><p>لا توجد طلبات رقمية</p></div></td></tr>'; return; }
+  tb.innerHTML = orders.map(o => {
+    const st = ORDER_STATUSES[o.status] || ORDER_STATUSES.new;
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:0.78rem;">#${o.id}</td>
+      <td><strong style="color:#fff">${o.customer_name||'-'}</strong><br><small style="color:var(--text-muted)">${o.phone||''}</small></td>
+      <td><strong>${o.product||'-'}</strong></td>
+      <td style="color:var(--warning);font-weight:700;">${o.price||'-'}</td>
+      <td><span class="badge available">${o.channel||'-'}</span></td>
+      <td style="font-size:0.82rem;color:var(--secondary);">${o.address||'-'}</td>
+      <td><span style="background:rgba(255,255,255,0.08);color:${st.color};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">${st.label}</span></td>
+      <td style="font-size:0.78rem;color:var(--text-muted)">${o.created_at?new Date(o.created_at).toLocaleDateString('ar'):'-'}</td>
+      <td style="display:flex;flex-direction:column;gap:4px;">
+        <select onchange="updateOrderStatus(${o.id},this.value)" style="background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:4px 8px;border-radius:6px;font-size:0.75rem;font-family:'Cairo',sans-serif;">
+          ${Object.entries(ORDER_STATUSES).map(([v,s])=>`<option value="${v}" ${o.status===v?'selected':''}>${s.label}</option>`).join('')}
+        </select>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-warning btn-sm" onclick="editOrder(${o.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id})">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddOrder() {
+  document.getElementById('order-id').value = '';
+  document.getElementById('modal-order-title').textContent = '🎮 طلب رقمي جديد';
+  ['o-name','o-phone','o-product','o-price','o-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('o-status').value = 'new';
+  document.getElementById('o-channel').value = 'whatsapp';
+  document.getElementById('o-payment').value = '';
+  // نحمل السلع للـ datalist
+  if (allProducts.length) {
+    document.getElementById('products-list').innerHTML = allProducts
+      .filter(p=>p.status==='available')
+      .map(p=>`<option value="${p.product_name} - ${p.price}">`)
+      .join('');
+  }
+  document.getElementById('modal-order').classList.add('open');
+}
+
+function editOrder(id) {
+  const o = allOrders.find(x=>x.id===id);
+  if (!o) return;
+  document.getElementById('order-id').value = id;
+  document.getElementById('modal-order-title').textContent = '✏️ تعديل الطلب';
+  document.getElementById('o-name').value = o.customer_name||'';
+  document.getElementById('o-phone').value = o.phone||'';
+  document.getElementById('o-product').value = o.product||'';
+  document.getElementById('o-price').value = o.price||'';
+  document.getElementById('o-notes').value = o.notes||'';
+  document.getElementById('o-channel').value = o.channel||'whatsapp';
+  document.getElementById('o-payment').value = o.address||''; // نستعمل address لطريقة الدفع
+  document.getElementById('o-status').value = o.status||'new';
+  document.getElementById('modal-order').classList.add('open');
+}
+
+async function saveOrder() {
+  const id = document.getElementById('order-id').value;
+  const data = {
+    customer_name: document.getElementById('o-name').value,
+    phone: document.getElementById('o-phone').value,
+    product: document.getElementById('o-product').value,
+    price: document.getElementById('o-price').value,
+    address: document.getElementById('o-payment').value, // طريقة الدفع فـ address
+    channel: document.getElementById('o-channel').value,
+    status: document.getElementById('o-status').value,
+    notes: document.getElementById('o-notes').value,
+    city: 'digital'
+  };
+  if (!data.customer_name || !data.product) return alert('الاسم والمنتج مطلوبان!');
+  if (id) await api(`/api/orders/${id}`, 'PUT', data);
+  else await api('/api/orders', 'POST', data);
+  closeModal('modal-order');
+  loadOrders();
+  if (document.getElementById('page-kanban').classList.contains('active')) loadKanban();
+}
+
+async function updateOrderStatus(id, status) {
+  await api(`/api/orders/${id}`, 'PUT', { status });
+  loadOrders();
+}
+
+async function deleteOrder(id) {
+  if (!confirm('تأكد الحذف؟')) return;
+  await api(`/api/orders/${id}`, 'DELETE');
+  loadOrders();
+}
+
+// ======= KANBAN =======
+async function loadKanban() {
+  const orders = await api('/api/orders') || [];
+  const board = document.getElementById('kanban-board');
+  const cols = [
+    { key:'new', label:'🆕 جديد', color:'#94a3b8' },
+    { key:'contacted', label:'📞 تواصل', color:'var(--secondary)' },
+    { key:'confirmed', label:'✅ مؤكد', color:'var(--primary)' },
+    { key:'delivered', label:'🎉 سُلّم', color:'var(--success)' },
+    { key:'cancelled', label:'❌ ملغي', color:'var(--danger)' }
+  ];
+  board.innerHTML = cols.map(col => {
+    const colOrders = orders.filter(o => o.status === col.key);
+    const revenue = colOrders.filter(o=>o.status==='delivered').reduce((s,o)=>s+(parseInt((o.price||'0').replace(/[^0-9]/g,''))||0),0);
+    return `
+      <div class="kanban-col" data-status="${col.key}"
+        ondragover="event.preventDefault();this.style.background='rgba(79,70,229,0.15)'"
+        ondragleave="this.style.background=''"
+        ondrop="dropKanban(event,'${col.key}')">
+        <div class="kanban-col-header" style="border-top:3px solid ${col.color};">
+          <span>${col.label}</span>
+          <span style="background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px;font-size:0.75rem;">${colOrders.length}</span>
+        </div>
+        <div class="kanban-col-body">
+          ${colOrders.length ? colOrders.map(o => `
+            <div class="kanban-card status-${o.status}"
+              draggable="true"
+              data-id="${o.id}"
+              ondragstart="dragKanban(event,${o.id})"
+              ondragend="this.style.opacity='1'">
+              <div class="kc-name">${o.customer_name||'زبون'}</div>
+              <div class="kc-product">${o.product||'-'}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+                <span class="kc-price">${o.price||''}</span>
+                <button onclick="editOrder(${o.id})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.75rem;">✏️</button>
+              </div>
+            </div>`).join('') :
+            `<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.8rem;border:2px dashed var(--border);border-radius:8px;margin:4px;">اسحب هنا</div>`}
+          ${revenue > 0 ? `<div style="text-align:center;font-size:0.78rem;color:var(--warning);margin-top:4px;padding:4px;background:rgba(245,158,11,0.1);border-radius:6px;">💰 ${revenue} DH</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Drag & Drop - يحفظ فـ Database
+function dragKanban(event, orderId) {
+  event.dataTransfer.setData('orderId', orderId);
+  event.target.style.opacity = '0.5';
+}
+
+async function dropKanban(event, newStatus) {
+  event.preventDefault();
+  const orderId = event.dataTransfer.getData('orderId');
+  event.currentTarget.style.background = '';
+  if (!orderId) return;
+  // حفظ فـ Database
+  await api(`/api/orders/${orderId}`, 'PUT', { status: newStatus });
+  loadKanban(); // reload
+}
+
+// ======= BUSINESS INTELLIGENCE =======
+let biHistory = [];
+
+async function askIntelligence(question) {
+  const input = document.getElementById('bi-input');
+  const q = question || input.value.trim();
+  if (!q) return;
+  if (!question) input.value = '';
+
+  document.getElementById('bi-typing').style.display = 'block';
+  document.getElementById('bi-answer').innerHTML = '';
+
+  try {
+    // نجيب البيانات الحقيقية
+    const [stats, orders, customers, demands] = await Promise.all([
+      api('/api/stats'),
+      api('/api/orders'),
+      api('/api/customers'),
+      api('/api/demands?period=month')
+    ]);
+
+    const today = new Date();
+    const todayOrders = (orders||[]).filter(o => new Date(o.created_at).toDateString() === today.toDateString());
+    const revenueMonth = (orders||[]).filter(o=>o.status==='delivered').reduce((s,o)=>s+(parseInt((o.price||'0').replace(/[^0-9]/g,''))||0),0);
+    const topDemands = demands?.demands?.slice(0,5).map(d=>`${d.product}(${d.count})`).join(', ') || 'لا توجد';
+
+    const customerOrders = {};
+    for (const o of orders||[]) {
+      if(!customerOrders[o.customer_name]) customerOrders[o.customer_name]=0;
+      customerOrders[o.customer_name]+=(parseInt((o.price||'0').replace(/[^0-9]/g,''))||0);
+    }
+    const topCustomers = Object.entries(customerOrders).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([n,r])=>`${n}(${r}DH)`).join(', ');
+
+    const channelStats = {};
+    for (const c of customers||[]) {
+      channelStats[c.channel] = (channelStats[c.channel]||0) + 1;
+    }
+    const bestChannel = Object.entries(channelStats).sort((a,b)=>b[1]-a[1])[0];
+
+    const systemPrompt = `أنت محلل تجاري ذكي لـ AykoShop. عندك هاد البيانات الحقيقية:
+- إجمالي الزبائن: ${stats?.customers||0}
+- سلع متاحة: ${stats?.available||0}
+- سلع مباعة: ${stats?.sold||0}
+- رسائل اليوم: ${stats?.messages_today||0}
+- طلبات اليوم: ${todayOrders.length}
+- إيرادات الشهر: ${revenueMonth} DH
+- أكثر منتجات مطلوبة: ${topDemands}
+- أحسن زبائن: ${topCustomers}
+- أحسن قناة: ${bestChannel?bestChannel[0]+' ('+bestChannel[1]+' زبون)':'غير محدد'}
+- إجمالي الطلبات: ${orders?.length||0}
+- طلبات مُسلَّمة: ${(orders||[]).filter(o=>o.status==='delivered').length}
+
+أجب بالدارجة المغربية أو الفصحى حسب السؤال. كن محددًا ومفيدًا مع أرقام حقيقية.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: q }]
+      })
+    });
+    const data = await response.json();
+    const answer = data.content?.[0]?.text || 'عذراً حدث خطأ.';
+
+    document.getElementById('bi-typing').style.display = 'none';
+    document.getElementById('bi-answer').innerHTML = `
+      <div style="background:rgba(79,70,229,0.08);border:1px solid rgba(79,70,229,0.2);border-radius:12px;padding:16px;font-size:0.9rem;line-height:1.7;">
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">❓ ${q}</div>
+        <div style="color:#fff;">${answer.replace(/\n/g,'<br>')}</div>
+      </div>`;
+
+    // حفظ فـ تاريخ
+    biHistory.unshift({ question: q, answer, time: new Date().toLocaleTimeString('ar') });
+    renderBIHistory();
+  } catch(e) {
+    document.getElementById('bi-typing').style.display = 'none';
+    document.getElementById('bi-answer').innerHTML = '<div class="alert alert-warning">⚠️ خطأ في الاتصال</div>';
+  }
+}
+
+function renderBIHistory() {
+  const container = document.getElementById('bi-history');
+  if (!biHistory.length) { container.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>لا توجد أسئلة بعد</p></div>'; return; }
+  container.innerHTML = biHistory.slice(0,5).map(h => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;">❓ ${h.question} <span style="margin-right:8px;">${h.time}</span></div>
+      <div style="font-size:0.86rem;color:#fff;">${h.answer.substring(0,150)}${h.answer.length>150?'...':''}</div>
+    </div>`).join('');
+}
+
+async function loadBISummary() {
+  const [stats, orders, demands] = await Promise.all([
+    api('/api/stats'),
+    api('/api/orders'),
+    api('/api/demands?period=week')
+  ]);
+
+  const revenueMonth = (orders||[]).filter(o=>o.status==='delivered').reduce((s,o)=>s+(parseInt((o.price||'0').replace(/[^0-9]/g,''))||0),0);
+  const convRate = Math.round(((orders||[]).filter(o=>o.status==='delivered').length / Math.max(stats?.customers||1,1))*100);
+  const topDemand = demands?.demands?.[0];
+
+  document.getElementById('bi-summary').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${[
+        ['💰 إيرادات الشهر', revenueMonth+' DH', 'var(--success)'],
+        ['📊 معدل التحويل', convRate+'%', 'var(--primary)'],
+        ['👥 إجمالي الزبائن', stats?.customers||0, 'var(--secondary)'],
+        ['📦 سلع متاحة', stats?.available||0, 'var(--warning)'],
+        ['🔥 أكثر منتج مطلوب', topDemand?topDemand.product+' ('+topDemand.count+')':'لا توجد', 'var(--danger)'],
+      ].map(([label,val,color])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">
+          <span style="font-size:0.85rem;">${label}</span>
+          <span style="font-weight:700;color:${color};">${val}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ======= IMAGE MATCHER =======
+let uploadedImageBase64 = '';
+let matchHistoryList = [];
+
+function handleImageUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedImageBase64 = e.target.result.split(',')[1];
+    document.getElementById('img-preview').style.display = 'block';
+    document.getElementById('preview-img').src = e.target.result;
+    document.getElementById('upload-zone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeImage() {
+  if (!uploadedImageBase64) return alert('حط صورة أولاً!');
+  const matchType = document.getElementById('match-type').value;
+  const resultDiv = document.getElementById('match-result');
+  resultDiv.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ AI يحلل الصورة...</div>';
+
+  try {
+    const products = await api('/api/products');
+    const available = (products||[]).filter(p=>p.status==='available');
+    const productsList = available.map(p=>`${p.product_name} - ${p.price} (${p.category||''})`).join('\n');
+
+    let prompt = '';
+    if (matchType === 'find') {
+      prompt = `حلل هاد الصورة وقارنها مع قائمة المنتجات التالية:\n${productsList}\n\nهل كاين منتج مشابه؟ إذا كاين قول أشنو هو والسعر. إذا ما كاينش قول ما كاينش وعرض أقرب بديل.`;
+    } else if (matchType === 'sell') {
+      prompt = `زبون باغي يبيع هاد المنتج. حلل الصورة وقارن مع inventory:\n${productsList}\n\nهل نحتاج هاد النوع؟ إذا كنا نشرى هاد النوع قول ليه "كنشريه" وإذا ما كنانش نشريوه قول ليه "ما كنشريوش هاد النوع دابا" وعطيه رقم WhatsApp: wa.me/212632588578`;
+    } else {
+      prompt = `قارن هاد المنتج مع inventory:\n${productsList}\n\nعطي تقرير مختصر: شنو هو المنتج، أقرب سلعة عندنا، score التشابه (0-100%).`;
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: uploadedImageBase64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+    const data = await response.json();
+    const result = data.content?.[0]?.text || 'عذراً حدث خطأ.';
+
+    const typeLabels = { find:'🔍 بحث', sell:'💰 بيع', compare:'📊 مقارنة' };
+    const typeColors = { find:'var(--primary)', sell:'var(--warning)', compare:'var(--secondary)' };
+
+    resultDiv.innerHTML = `
+      <div style="background:rgba(79,70,229,0.08);border:1px solid rgba(79,70,229,0.2);border-radius:12px;padding:16px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+          <span class="badge available">${typeLabels[matchType]}</span>
+          <span style="font-size:0.75rem;color:var(--text-muted);">${new Date().toLocaleTimeString('ar')}</span>
+        </div>
+        <div style="font-size:0.9rem;line-height:1.7;color:#fff;">${result.replace(/\n/g,'<br>')}</div>
+      </div>`;
+
+    matchHistoryList.unshift({ result, type: matchType, time: new Date().toLocaleTimeString('ar') });
+    renderMatchHistory();
+
+    // Reset
+    uploadedImageBase64 = '';
+    document.getElementById('img-preview').style.display = 'none';
+    document.getElementById('upload-zone').style.display = 'block';
+    document.getElementById('img-upload').value = '';
+
+  } catch(e) {
+    resultDiv.innerHTML = '<div class="alert alert-warning">⚠️ خطأ في التحليل</div>';
+  }
+}
+
+function renderMatchHistory() {
+  const container = document.getElementById('match-history');
+  if (!matchHistoryList.length) { container.innerHTML = '<div class="empty-state"><div class="icon">📸</div><p>لا توجد تحليلات بعد</p></div>'; return; }
+  const typeLabels = { find:'🔍 بحث', sell:'💰 بيع', compare:'📊 مقارنة' };
+  container.innerHTML = matchHistoryList.slice(0,5).map(h => `
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;gap:8px;margin-bottom:4px;">
+        <span class="badge available">${typeLabels[h.type]||h.type}</span>
+        <span style="font-size:0.75rem;color:var(--text-muted);">${h.time}</span>
+      </div>
+      <div style="font-size:0.84rem;color:#fff;">${h.result.substring(0,120)}${h.result.length>120?'...':''}</div>
+    </div>`).join('');
+}
+
+// ======= DATA WAREHOUSE =======
+let warehouseData = [];
+
+async function loadWarehouse() {
+  // نجيب stats
+  const stats = await api('/api/warehouse/stats');
+  if (stats) {
+    document.getElementById('wh-total').textContent = stats.total || 0;
+    const purchased = stats.by_result?.find(r=>r.result==='purchased')?.count || 0;
+    const pending = stats.by_result?.find(r=>r.result==='pending')?.count || 0;
+    document.getElementById('wh-purchased').textContent = purchased;
+    document.getElementById('wh-pending').textContent = pending;
+
+    // زبائن فريدون
+    document.getElementById('wh-customers').textContent = stats.top_customers?.length || 0;
+
+    // معدل التحويل
+    const convRate = stats.total > 0 ? Math.round((purchased / stats.total) * 100) : 0;
+    document.getElementById('wh-conv-rate').textContent = convRate + '%';
+
+    // Top Customers
+    const topCust = document.getElementById('wh-top-customers');
+    topCust.innerHTML = stats.top_customers?.length ? stats.top_customers.map((c,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1rem;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👤'}</span>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:0.88rem;">${c.customer_name||'زبون'}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">${c.messages} رسالة</div>
+        </div>
+        <span style="color:var(--success);font-weight:700;">${c.purchases} شراء</span>
+      </div>`).join('') :
+      '<div class="empty-state"><div class="icon">👥</div><p>لا توجد بيانات</p></div>';
+
+    // By Category
+    const catDiv = document.getElementById('wh-by-category');
+    const maxCat = Math.max(...(stats.by_category||[]).map(c=>parseInt(c.count)), 1);
+    catDiv.innerHTML = stats.by_category?.length ? stats.by_category.map(c => `
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);">
+        <span style="min-width:80px;font-size:0.85rem;">${c.category||'عام'}</span>
+        <div style="flex:1;height:6px;background:var(--border);border-radius:3px;">
+          <div style="width:${(parseInt(c.count)/maxCat)*100}%;height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:3px;"></div>
+        </div>
+        <span style="color:var(--warning);font-weight:700;min-width:30px;">${c.count}</span>
+      </div>`).join('') :
+      '<div class="empty-state"><div class="icon">📊</div><p>لا توجد بيانات</p></div>';
+  }
+
+  // نجيب أحدث رسائل
+  await searchWarehouse();
+}
+
+async function searchWarehouse() {
+  const q = document.getElementById('wh-search').value.trim();
+  const category = document.getElementById('wh-filter-category').value;
+  const platform = document.getElementById('wh-filter-platform').value;
+  const result = document.getElementById('wh-filter-result').value;
+
+  let url = '/api/warehouse/search?limit=100';
+  if (q) url += '&q=' + encodeURIComponent(q);
+  if (category !== 'all') url += '&category=' + encodeURIComponent(category);
+  if (platform !== 'all') url += '&platform=' + encodeURIComponent(platform);
+  if (result !== 'all') url += '&result=' + encodeURIComponent(result);
+
+  const data = await api(url);
+  warehouseData = data?.data || [];
+  document.getElementById('wh-count').textContent = `(${data?.total || 0} نتيجة)`;
+  renderWarehouse(warehouseData);
+}
+
+function resetWarehouse() {
+  document.getElementById('wh-search').value = '';
+  document.getElementById('wh-filter-category').value = 'all';
+  document.getElementById('wh-filter-platform').value = 'all';
+  document.getElementById('wh-filter-result').value = 'all';
+  searchWarehouse();
+}
+
+function renderWarehouse(data) {
+  const tb = document.getElementById('warehouse-table');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="icon">🗄️</div><p>لا توجد بيانات - رسائل زبائنك ستظهر هنا تلقائياً</p></div></td></tr>';
+    return;
+  }
+  const resultColors = { purchased:'var(--success)', not_purchased:'var(--danger)', pending:'var(--warning)' };
+  const resultLabels = { purchased:'✅ اشترى', not_purchased:'❌ ما اشتراش', pending:'⏳ قيد التتبع' };
+  tb.innerHTML = data.map(d => `
+    <tr>
+      <td><strong style="color:#fff">${d.customer_name||'-'}</strong></td>
+      <td><span class="badge available">${d.platform||'-'}</span></td>
+      <td><span style="background:rgba(79,70,229,0.15);color:var(--primary-light);padding:2px 8px;border-radius:10px;font-size:0.75rem;">${d.category||'-'}</span></td>
+      <td style="max-width:200px;"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;" title="${d.message||''}">${d.message||'-'}</div></td>
+      <td style="max-width:200px;"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.82rem;color:var(--text-muted);" title="${d.ai_response||''}">${d.ai_response||'-'}</div></td>
+      <td><span style="color:${resultColors[d.result]||'var(--text-muted)'};font-size:0.82rem;font-weight:600;">${resultLabels[d.result]||d.result||'-'}</span></td>
+      <td style="font-size:0.75rem;color:var(--text-muted);">${d.created_at?new Date(d.created_at).toLocaleString('ar'):'-'}</td>
+      <td>
+        <select onchange="updateWarehouseResult(${d.id},this.value)" style="background:#0a0e1a;border:1px solid var(--border);color:#e2e8f0;padding:3px 6px;border-radius:6px;font-size:0.72rem;font-family:'Cairo',sans-serif;">
+          <option value="pending" ${d.result==='pending'?'selected':''}>⏳ قيد</option>
+          <option value="purchased" ${d.result==='purchased'?'selected':''}>✅ اشترى</option>
+          <option value="not_purchased" ${d.result==='not_purchased'?'selected':''}>❌ لا</option>
+        </select>
+      </td>
+    </tr>`).join('');
+}
+
+async function updateWarehouseResult(id, result) {
+  await api(`/api/warehouse/${id}/result`, 'PATCH', { result });
+}
+
+// Enter للبحث
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('wh-search');
+  if (input) input.addEventListener('keydown', e => { if(e.key==='Enter') searchWarehouse(); });
+});
+
+// ======= SETTINGS - DB =======
+async function loadSettings() {
+  const s = await api('/api/settings');
+  if (s) {
+    document.getElementById('store-name').value = s.store_name || 'AykoShop';
+    document.getElementById('store-email').value = s.store_email || '';
+    document.getElementById('store-phone').value = s.store_phone || '212632588578';
+  }
+}
+
+async function changePassword() {
+  const current = document.getElementById('current-pass').value;
+  const newPass = document.getElementById('new-pass').value;
+  const confirm = document.getElementById('confirm-pass').value;
+  const msg = document.getElementById('pass-msg');
+  if (newPass.length < 4) { msg.textContent='❌ الباسورد قصير!'; msg.style.color='var(--danger)'; msg.style.display='block'; return; }
+  if (newPass !== confirm) { msg.textContent='❌ الباسوردين مش متطابقان!'; msg.style.color='var(--danger)'; msg.style.display='block'; return; }
+  const r = await api('/api/settings/change-password', 'POST', { current_password: current, new_password: newPass });
+  if (r?.success) {
+    msg.textContent = '✅ تم تغيير الباسورد فـ قاعدة البيانات!';
+    msg.style.color = 'var(--success)'; msg.style.display = 'block';
+    document.getElementById('current-pass').value = '';
+    document.getElementById('new-pass').value = '';
+    document.getElementById('confirm-pass').value = '';
+  } else {
+    msg.textContent = '❌ ' + (r?.error || 'الباسورد الحالي غلط!');
+    msg.style.color = 'var(--danger)'; msg.style.display = 'block';
+  }
+}
+
+async function saveAccountSettings() {
+  const name = document.getElementById('store-name').value.trim();
+  const email = document.getElementById('store-email').value.trim();
+  const phone = document.getElementById('store-phone').value.trim();
+  const msg = document.getElementById('account-msg');
+  await Promise.all([
+    api('/api/settings', 'POST', { key: 'store_name', value: name }),
+    api('/api/settings', 'POST', { key: 'store_email', value: email }),
+    api('/api/settings', 'POST', { key: 'store_phone', value: phone })
+  ]);
+  msg.textContent = '✅ تم الحفظ فـ قاعدة البيانات!';
+  msg.style.color = 'var(--success)'; msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 3000);
+}
+
+// ======= AI INSIGHTS =======
+async function loadInsights() {
+  const data = await api('/api/ai-insights');
+  if (!data) return;
+
+  // Stats
+  document.getElementById('ins-conv-rate').textContent = (data.conversion_rate?.rate || 0) + '%';
+  document.getElementById('ins-best-channel').textContent = data.best_channel?.channel || '-';
+  document.getElementById('ins-ready').textContent = data.ready_to_buy?.length || 0;
+
+  // Top Products
+  const maxRev = Math.max(...(data.top_products||[]).map(p=>parseInt(p.revenue||0)), 1);
+  document.getElementById('ins-top-products').innerHTML = data.top_products?.length ?
+    data.top_products.map((p,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1rem;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'📦'}</span>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:0.88rem;">${p.product||'-'}</div>
+          <div style="height:4px;background:var(--border);border-radius:2px;margin-top:3px;">
+            <div style="width:${(parseInt(p.revenue||0)/maxRev)*100}%;height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:2px;"></div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="color:var(--warning);font-weight:700;">${p.orders} طلب</div>
+          <div style="font-size:0.72rem;color:var(--success);">${p.revenue||0} DH</div>
+        </div>
+      </div>`).join('') :
+    '<div class="empty-state"><div class="icon">📦</div><p>لا توجد مبيعات بعد</p></div>';
+
+  // Ready to Buy
+  document.getElementById('ins-ready-list').innerHTML = data.ready_to_buy?.length ?
+    data.ready_to_buy.map(c => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:0.88rem;">${c.customer_name||'زبون'}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">${c.interested_in||'-'}</div>
+        </div>
+        <span class="badge available">${c.channel||'-'}</span>
+        <span style="color:var(--success);font-weight:700;">${c.lead_score}</span>
+      </div>`).join('') :
+    '<div class="empty-state"><div class="icon">🎯</div><p>لا توجد leads جاهزة</p></div>';
+
+  // Top Questions
+  document.getElementById('ins-top-questions').innerHTML = data.top_questions?.length ?
+    data.top_questions.map(q => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;font-size:0.85rem;">${q.question||'-'}</div>
+        <span style="color:var(--warning);font-weight:700;">${q.count}x</span>
+      </div>`).join('') :
+    '<div class="empty-state"><div class="icon">❓</div><p>لا توجد أسئلة مجهولة</p></div>';
+}
+
+// EXPORT CSV
+function exportData(type) {
+  window.open(`http://5.189.170.55:4000/api/export/${type}`, '_blank');
+}
+
+// BULK FOLLOW-UP
+async function sendBulkFollowup() {
+  const message = document.getElementById('bulk-message').value.trim();
+  const target = document.getElementById('bulk-target').value;
+  if (!message) return alert('اكتب رسالة أولاً!');
+  if (!confirm(`تأكد إرسال رسالة bulk follow-up؟`)) return;
+
+  document.getElementById('bulk-result').innerHTML = '⏳ جاري الإرسال...';
+  const r = await api('/api/follow-ups/bulk-send', 'POST', { message, target });
+  if (r?.success) {
+    document.getElementById('bulk-result').innerHTML = `<span style="color:var(--success);">✅ أُرسل لـ ${r.sent} زبون (${r.failed} فشل)</span>`;
+    document.getElementById('bulk-message').value = '';
+  } else {
+    document.getElementById('bulk-result').innerHTML = '<span style="color:var(--danger);">❌ فشل الإرسال</span>';
+  }
+}
+
+// ======= CUSTOMER SEGMENTS =======
+async function loadSegments() {
+  const data = await api('/api/segments');
+  if (!data) return;
+
+  document.getElementById('seg-vip').textContent = data.vip?.length || 0;
+  document.getElementById('seg-hot').textContent = data.hot_not_purchased?.length || 0;
+  document.getElementById('seg-lost').textContent = data.lost?.length || 0;
+  document.getElementById('seg-new').textContent = data.new_today?.length || 0;
+
+  // VIP List
+  document.getElementById('seg-vip-list').innerHTML = data.vip?.length ? data.vip.map((c,i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:1.2rem;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👑'}</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;">${c.customer_name||'زبون'}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">${c.order_count} طلب</div>
+      </div>
+      <span style="color:var(--warning);font-weight:700;">${c.total_spent||0} DH</span>
+    </div>`).join('') :
+    '<div class="empty-state"><div class="icon">👑</div><p>لا توجد VIP بعد</p></div>';
+
+  // Lost List
+  document.getElementById('seg-lost-list').innerHTML = data.lost?.length ? data.lost.slice(0,10).map(c => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;">
+        <div style="font-weight:600;">${c.customer_name||'زبون'}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">${c.interested_in||'-'} · ${Math.round(c.hours_ago||0)}h منذ</div>
+      </div>
+      <span class="badge ${c.channel||'cold'}">${c.channel||'-'}</span>
+    </div>`).join('') :
+    '<div class="empty-state"><div class="icon">✅</div><p>لا توجد lost leads</p></div>';
+}
+
+// ======= FOLLOW-UP =======
+async function loadFollowUps() {
+  const data = await api('/api/follow-ups') || [];
+
+  const badge = document.getElementById('followups-badge');
+  if (data.length > 0) { badge.textContent = data.length; badge.style.display = 'inline-block'; }
+  else badge.style.display = 'none';
+
+  const tb = document.getElementById('followups-table');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="icon">✅</div><p>لا يوجد زبائن يحتاجون follow-up</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = data.map(d => `
+    <tr>
+      <td><strong style="color:#fff">${d.customer_name||'زبون'}</strong></td>
+      <td><span class="badge available">${d.channel||'-'}</span></td>
+      <td style="color:var(--secondary);">${d.interested_in||'-'}</td>
+      <td><span style="color:${(d.lead_score||0)>60?'var(--success)':'var(--warning)'};font-weight:700;">${d.lead_score||0}</span></td>
+      <td style="color:var(--text-muted);font-size:0.82rem;">${Math.round(d.hours_since||0)}h</td>
+      <td>
+        <a href="https://app.manychat.com/fb4538388/subscribers/${d.subscriber_id}" target="_blank" class="btn btn-primary btn-sm">💬 ManyChat</a>
+      </td>
+    </tr>`).join('');
+}
+
+// إصلاح Prompt - يتحفظ ويقرا من DB
+async function loadPromptPage() {
+  // نجيب من DB أولاً
+  const saved = await api('/api/system-prompt');
+  const promptText = saved?.prompt || localStorage.getItem('ayko_system_prompt') || DEFAULT_PROMPT;
+  document.getElementById('system-prompt-text').value = promptText;
+}
+
+async function savePrompt() {
+  const prompt = document.getElementById('system-prompt-text').value.trim();
+  if (!prompt) return alert('الـ Prompt فارغ!');
+  // نحفظ فـ DB + localStorage
+  await api('/api/system-prompt', 'POST', { prompt });
+  localStorage.setItem('ayko_system_prompt', prompt);
+  alert('✅ تم حفظ الـ Prompt فـ قاعدة البيانات! AI غيستعملو من دابا');
+}
+
+// ======= AUTO CHECKS =======
+// Auto check new orders
+setInterval(async () => {
+  try {
+    const data = await api('/api/orders');
+    const newOrd = data?.filter(o=>o.status==='new').length || 0;
+    const badge = document.getElementById('orders-badge');
+    if (badge) { if(newOrd>0){badge.textContent=newOrd;badge.style.display='inline-block';}else badge.style.display='none'; }
+  } catch(e) {}
+}, 60000);
+
+// ======= PIPELINE & SCORING =======
+let allScores = [];
+
+async function loadPipeline() {
+  const data = await api('/api/lead-scores') || [];
+  allScores = data;
+
+  // Stats
+  document.getElementById('pipe-hot').textContent = data.filter(d=>d.sentiment==='hot').length;
+  document.getElementById('pipe-interested').textContent = data.filter(d=>d.sentiment==='interested').length;
+  document.getElementById('pipe-negotiating').textContent = data.filter(d=>d.pipeline_stage==='negotiating').length;
+  document.getElementById('pipe-confirmed').textContent = data.filter(d=>d.pipeline_stage==='order_confirmed').length;
+
+  // Follow-up
+  const followups = data.filter(d=>d.needs_follow_up);
+  document.getElementById('followup-list').innerHTML = followups.length
+    ? followups.slice(0,5).map(d => `
+        <div class="demand-item" style="margin-bottom:8px;">
+          <div style="flex:1;">
+            <div style="font-weight:600;">${d.customer_name||'زبون'}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">${d.hours_since_last_seen||0} ساعة بلا رد</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:1.2rem;font-weight:800;color:${d.lead_score>70?'var(--success)':d.lead_score>40?'var(--warning)':'var(--danger)'};">${d.lead_score}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">Score</div>
+          </div>
+        </div>`).join('')
+    : '<div class="empty-state"><div class="icon">✅</div><p>لا يوجد زبائن يحتاجون follow-up</p></div>';
+
+  // Top scores
+  const topScores = [...data].sort((a,b)=>b.lead_score-a.lead_score).slice(0,5);
+  document.getElementById('top-scores-list').innerHTML = topScores.length
+    ? topScores.map((d,i) => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <span class="rank-badge rank-${i+1<4?i+1:''}" style="${i>2?'background:rgba(79,70,229,0.1);color:var(--primary-light);':''}">${i+1}</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;">${d.customer_name||'زبون'}</div>
+            <div class="score-bar-bg"><div class="score-bar ${d.lead_score>70?'score-high':d.lead_score>40?'score-mid':'score-low'}" style="width:${d.lead_score}%"></div></div>
+          </div>
+          <span style="font-weight:800;font-size:1.1rem;color:${d.lead_score>70?'var(--success)':d.lead_score>40?'var(--warning)':'var(--danger)'};">${d.lead_score}</span>
+        </div>`).join('')
+    : '<div class="empty-state"><div class="icon">📊</div><p>لا توجد بيانات بعد</p></div>';
+
+  renderScores(data);
+}
+
+function renderScores(data) {
+  const tb = document.getElementById('scores-table');
+  if (!data.length) { tb.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="icon">🎯</div><p>لا توجد بيانات scoring بعد - Workflow يشتغل كل ساعة</p></div></td></tr>'; return; }
+  const sentimentLabels = { hot:'🔥 Hot', interested:'👀 مهتم', neutral:'😐 محايد', angry:'😤 غاضب' };
+  const pipelineLabels = { new_lead:'جديد', interested:'مهتم', negotiating:'تفاوض', order_confirmed:'مؤكد', delivered:'تسليم' };
+  tb.innerHTML = data.map(d => `
+    <tr>
+      <td><strong style="color:#fff">${d.customer_name||'زبون'}</strong></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <strong style="color:${d.lead_score>70?'var(--success)':d.lead_score>40?'var(--warning)':'var(--danger)'};">${d.lead_score}</strong>
+          <div style="flex:1;min-width:60px;"><div class="score-bar-bg"><div class="score-bar ${d.lead_score>70?'score-high':d.lead_score>40?'score-mid':'score-low'}" style="width:${d.lead_score}%"></div></div></div>
+        </div>
+      </td>
+      <td><span class="sentiment-${d.sentiment}">${sentimentLabels[d.sentiment]||d.sentiment}</span></td>
+      <td><span class="pipeline-badge pipeline-${d.pipeline_stage}">${pipelineLabels[d.pipeline_stage]||d.pipeline_stage}</span></td>
+      <td style="font-size:0.78rem;color:var(--text-muted);">${d.scored_at?new Date(d.scored_at).toLocaleDateString('ar'):'-'}</td>
+      <td>${d.needs_follow_up?'<span class="badge warm">⏰ نعم</span>':'<span class="badge available">✅ لا</span>'}</td>
+    </tr>`).join('');
+}
+
+function filterScores(q) {
+  renderScores(allScores.filter(d => d.customer_name?.toLowerCase().includes(q.toLowerCase())));
+}
+
+// ======= BROADCAST =======
+function openBroadcast() {
+  document.getElementById('bc-title').value = '';
+  document.getElementById('bc-message').value = '';
+  document.getElementById('bc-target').value = 'all';
+}
+
+async function loadBroadcasts() {
+  const data = await api('/api/broadcasts') || [];
+  const list = document.getElementById('broadcasts-list');
+  if (!data.length) { list.innerHTML = '<div class="empty-state"><div class="icon">📢</div><p>لا توجد broadcasts بعد</p></div>'; return; }
+  list.innerHTML = data.map(b => `
+    <div style="padding:12px;background:rgba(79,70,229,0.06);border:1px solid rgba(79,70,229,0.15);border-radius:10px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <strong>${b.title}</strong>
+        <span class="badge ${b.status==='sent'?'available':'warm'}">${b.status==='sent'?'✅ أُرسل':'📝 Draft'}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">${b.message?.substring(0,60)}...</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:0.75rem;color:var(--text-muted);">🎯 ${b.target_stage} | 👥 ${b.sent_count} أُرسل</span>
+        ${b.status==='draft'?`<button class="btn btn-success btn-sm" onclick="sendBroadcast(${b.id})">📢 إرسال</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function saveBroadcast() {
+  const title = document.getElementById('bc-title').value;
+  const message = document.getElementById('bc-message').value;
+  const target = document.getElementById('bc-target').value;
+  if (!title||!message) return alert('العنوان والرسالة مطلوبان!');
+  await api('/api/broadcasts','POST',{title,message,target_stage:target});
+  document.getElementById('bc-title').value='';
+  document.getElementById('bc-message').value='';
+  loadBroadcasts();
+  alert('✅ تم الحفظ كـ Draft!');
+}
+
+async function sendBroadcast(id) {
+  if (!confirm('تأكد إرسال الرسالة؟')) return;
+  const r = await api(`/api/broadcasts/${id}/send`,'POST');
+  alert(`✅ تم الإرسال لـ ${r?.sent_count||0} زبون!`);
+  loadBroadcasts();
+}
+
+// ======= PROMPT AI =======
+const PROMPT_KEY = 'ayko_system_prompt';
+const DEFAULT_PROMPT = `أنت بائع محترف في AykoShop للمنتجات الرقمية.
+المنتجات المتاحة: [PRODUCTS]
+
+[EXAMPLES]
+
+قواعد التواصل:
+1. طابق لغة الزبون دائماً:
+   - دارجة مغربية (واه، بغيت، slm, cava) → جاوب بالدارجة
+   - عربية فصحى → جاوب بالفصحى
+   - إنجليزية (hi, hello, how much) → جاوب بالإنجليزية
+2. جملتين قصيرتين فقط - لا أكثر
+3. أنت بائع بشري محترف - لا تذكر أنك AI أو بوت أبداً
+4. لا تكتب أي رابط أو URL في ردودك - ممنوع تماماً
+5. لا تقل "آسف" أو "ما نقدرش" أو "للأسف"
+6. تنوع ردودك - لا تكرر نفس الجملة أبداً
+7. طرق الدفع: CIH Bank، Barid Bank، Cash Plus، Wafacash، Binance USDT
+8. كي زبون يقول "سلام/مرحبا/slm/hi" → رد بترحيب قصير فقط
+9. كي السؤال خارج نطاقك → قل فقط: UNKNOWN_QUESTION
+
+[INSTRUCTION]`;
+
+function loadPromptPage() {
+  const saved = localStorage.getItem(PROMPT_KEY) || DEFAULT_PROMPT;
+  document.getElementById('system-prompt-text').value = saved;
+}
+
+function savePrompt() {
+  const prompt = document.getElementById('system-prompt-text').value.trim();
+  if (!prompt) return alert('الـ Prompt فارغ!');
+  localStorage.setItem(PROMPT_KEY, prompt);
+  alert('✅ تم حفظ الـ Prompt! AI غيستعملو من دابا');
+}
+
+function loadDefaultPrompt() {
+  if (!confirm('تأكد استرجاع الـ Prompt الافتراضي؟')) return;
+  document.getElementById('system-prompt-text').value = DEFAULT_PROMPT;
+}
+
+function getSystemPrompt(products, examplesText, instruction) {
+  const saved = localStorage.getItem(PROMPT_KEY) || DEFAULT_PROMPT;
+  return saved
+    .replace('[PRODUCTS]', products)
+    .replace('[EXAMPLES]', examplesText ? `--- أمثلة محادثات ---\n${examplesText}\n--- نهاية الأمثلة ---` : '')
+    .replace('[INSTRUCTION]', instruction || '');
+}
+
+// ======= UNKNOWN QUESTIONS =======
+let allUnknown = [];
+
+async function loadUnknown() {
+  allUnknown = await api('/api/unknown-questions') || [];
+  const pending = allUnknown.filter(q => !q.learned);
+
+  // badge
+  const badge = document.getElementById('unknown-badge');
+  if (pending.length > 0) { badge.textContent = pending.length; badge.style.display = 'inline-block'; }
+  else badge.style.display = 'none';
+
+  const list = document.getElementById('unknown-list');
+  if (!allUnknown.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>لا توجد أسئلة مجهولة - AI كيجوب على كل شي!</p></div>';
+    return;
+  }
+
+  list.innerHTML = allUnknown.map(q => `
+    <div class="card" style="margin-bottom:12px;border-right:3px solid ${q.learned?'var(--success)':'var(--warning)'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div style="flex:1;">
+          <div style="font-weight:600;color:#fff;margin-bottom:4px;">👤 ${q.customer_name||'زبون'} · ${q.channel||''}</div>
+          <div style="font-size:0.9rem;color:var(--text-muted);">💬 ${q.question}</div>
+          ${q.learned?`<div style="font-size:0.85rem;color:var(--success);margin-top:6px;">✅ الجواب: ${q.answer}</div>`:''}
+        </div>
+        <span class="badge ${q.learned?'available':'warm'}" style="margin-right:10px;">${q.learned?'✅ تعلم':'⏳ انتظار'}</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:0.75rem;color:var(--text-muted);">${q.created_at?new Date(q.created_at).toLocaleString('ar'):''}</span>
+        <div style="margin-right:auto;display:flex;gap:6px;">
+          ${q.manychat_link?`<a href="${q.manychat_link}" target="_blank" class="btn btn-ghost btn-sm">🔗 ManyChat</a>`:''}
+          ${!q.learned?`<button class="btn btn-primary btn-sm" onclick="openAnswer(${q.id},'${q.question.replace(/'/g,"\\'")}')">✏️ جاوب + علم AI</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="deleteUnknown(${q.id})">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openAnswer(id, question) {
+  document.getElementById('answer-id').value = id;
+  document.getElementById('answer-question').textContent = question;
+  document.getElementById('answer-text').value = '';
+  document.getElementById('modal-answer').classList.add('open');
+}
+
+async function submitAnswer() {
+  const id = document.getElementById('answer-id').value;
+  const answer = document.getElementById('answer-text').value;
+  const category = document.getElementById('answer-category').value;
+  if (!answer) return alert('الجواب مطلوب!');
+  const r = await api(`/api/unknown-questions/${id}/answer`, 'PATCH', {answer, category});
+  if (r?.success) {
+    closeModal('modal-answer');
+    loadUnknown();
+    alert('✅ تم الجواب! AI تعلم منه وغيستعملو من بعد 🧠');
+  }
+}
+
+async function deleteUnknown(id) {
+  if (!confirm('تأكد الحذف؟')) return;
+  await api(`/api/unknown-questions/${id}`, 'DELETE');
+  loadUnknown();
+}
+
+// ======= CHAT BUILDER =======
+let builderMessages = [];
+
+// saveConversation من modal قديم
+async function saveConversation() {
+  const data = {
+    customer_message: document.getElementById('conv-question')?.value || '',
+    correct_reply: document.getElementById('conv-reply')?.value || '',
+    category: document.getElementById('conv-category')?.value || 'general'
+  };
+  if (!data.customer_message || !data.correct_reply) return alert('السؤال والجواب مطلوبان!');
+  await api('/api/conversations', 'POST', data);
+  closeModal('modal-conversation');
+  loadConversations();
+  alert('✅ تم الحفظ! AI غيتعلم من هاد المحادثة');
+}
+
+function addBuilderMessage() {
+  const role = document.getElementById('msg-role').value;
+  const text = document.getElementById('msg-text').value.trim();
+  if (!text) return;
+  builderMessages.push({ role, text, id: Date.now() });
+  document.getElementById('msg-text').value = '';
+  renderBuilder();
+}
+
+function renderBuilder() {
+  const container = document.getElementById('chat-builder-messages');
+  if (!builderMessages.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;font-size:0.85rem;">ابدأ بإضافة رسائل 👆</div>';
+    return;
+  }
+  container.innerHTML = builderMessages.map((m, i) => `
+    <div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};margin-bottom:8px;gap:6px;align-items:flex-start;">
+      ${m.role==='assistant'?'<span style="font-size:1rem;margin-top:4px;">🤖</span>':''}
+      <div style="max-width:75%;">
+        <div class="chat-bubble ${m.role}" style="position:relative;padding-left:32px;">
+          ${m.text}
+        </div>
+        <div style="display:flex;gap:4px;margin-top:4px;justify-content:${m.role==='user'?'flex-end':'flex-start'};">
+          <button onclick="editBuilderMsg(${i})" style="background:none;border:none;cursor:pointer;color:var(--warning);font-size:0.75rem;">✏️ عدل</button>
+          <button onclick="deleteBuilderMsg(${i})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:0.75rem;">🗑️</button>
+        </div>
+      </div>
+      ${m.role==='user'?'<span style="font-size:1rem;margin-top:4px;">👤</span>':''}
+    </div>`).join('');
+}
+
+function editBuilderMsg(i) {
+  const newText = prompt('عدل الرسالة:', builderMessages[i].text);
+  if (newText !== null && newText.trim()) {
+    builderMessages[i].text = newText.trim();
+    renderBuilder();
+  }
+}
+
+function deleteBuilderMsg(i) {
+  builderMessages.splice(i, 1);
+  renderBuilder();
+}
+
+function clearBuilder() {
+  if (builderMessages.length && !confirm('تأكد مسح المحادثة؟')) return;
+  builderMessages = [];
+  renderBuilder();
+}
+
+async function saveBuilderConversation() {
+  if (builderMessages.length < 2) return alert('خاصك على الأقل رسالتين!');
+  const category = document.getElementById('builder-category').value;
+  const name = document.getElementById('builder-name').value.trim() || `محادثة ${category} - ${new Date().toLocaleDateString('ar')}`;
+
+  let saved = 0;
+  for (let i = 0; i < builderMessages.length - 1; i++) {
+    if (builderMessages[i].role === 'user' && builderMessages[i+1].role === 'assistant') {
+      await api('/api/conversations', 'POST', {
+        category,
+        name,
+        customer_message: builderMessages[i].text,
+        correct_reply: builderMessages[i+1].text
+      });
+      saved++;
+    }
+  }
+
+  if (saved > 0) {
+    alert(`✅ تم الحفظ! "${name}" - ${saved} محادثة تعلم منها AI 🧠`);
+    document.getElementById('builder-name').value = '';
+    clearBuilder();
+    loadConversations();
+  } else {
+    alert('⚠️ خاص يكون ترتيب: زبون → AI → زبون → AI...');
+  }
+}
+
+// ======= CONVERSATION LIBRARY =======
+let allConversations = [];
+let currentConvCategory = 'all';
+
+async function loadConversations() {
+  allConversations = await api('/api/conversations') || [];
+  renderBuilder(); // init empty builder
+  renderConversations(allConversations);
+}
+
+function filterConvCategory(cat, btn) {
+  currentConvCategory = cat;
+  document.querySelectorAll('#page-conversations .period-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat === 'all' ? allConversations : allConversations.filter(c => c.category === cat);
+  renderConversations(filtered);
+}
+
+function renderConversations(convs) {
+  const list = document.getElementById('conversations-list');
+  if (!convs.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>لا توجد محادثات بعد</p></div>';
+    return;
+  }
+  const catIcons = { 'شراء':'🛒', 'دفع':'💳', 'دعم':'🛠️', 'شحن':'📦', 'general':'🌐' };
+  const catColors = { 'شراء':'var(--success)', 'دفع':'var(--warning)', 'دعم':'var(--danger)', 'شحن':'var(--secondary)', 'general':'var(--primary)' };
+
+  // نجمع حسب الاسم
+  const grouped = {};
+  for (const c of convs) {
+    const key = c.name || `${catIcons[c.category]||'💬'} ${c.category}`;
+    if (!grouped[key]) grouped[key] = { items: [], category: c.category, id: c.id };
+    grouped[key].items.push(c);
+  }
+
+  list.innerHTML = Object.entries(grouped).map(([name, group]) => `
+    <div style="margin-bottom:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(79,70,229,0.1);border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="badge available">${catIcons[group.category]||'💬'} ${group.category}</span>
+          <strong style="color:#fff;font-size:0.9rem;">${name}</strong>
+          <span style="font-size:0.75rem;color:var(--text-muted);">${group.items.length} رسالة</span>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteConversationGroup('${name.replace(/'/g,"\\'")}')">🗑️</button>
+      </div>
+      <div style="padding:10px 14px;">
+        ${group.items.map(c => `
+          <div style="margin-bottom:6px;">
+            <div style="font-size:0.82rem;color:var(--text-muted);">👤 ${c.customer_message}</div>
+            <div style="font-size:0.82rem;color:var(--success);margin-top:2px;">🤖 ${c.correct_reply}</div>
+          </div>`).join('<hr style="border-color:var(--border);margin:6px 0;">')}
+      </div>
+    </div>`).join('');
+}
+
+async function deleteConversation(id) {
+  if (!confirm('تأكد الحذف؟')) return;
+  await api(`/api/conversations/${id}`, 'DELETE');
+  loadConversations();
+}
+
+async function deleteConversationGroup(name) {
+  if (!confirm(`تأكد مسح محادثة "${name}"؟`)) return;
+  const toDelete = allConversations.filter(c => (c.name || `${c.category}`) === name);
+  for (const c of toDelete) await api(`/api/conversations/${c.id}`, 'DELETE');
+  loadConversations();
+}
+
+// API KEY - محفوظ في localStorage
+const API_KEY_STORAGE = 'ayko_api_key';
+let currentApiKey = localStorage.getItem(API_KEY_STORAGE) || 'aykoshop_live_2024_ayoub_secure';
+let apiKeyVisible = false;
+
+function toggleApiKey() {
+  apiKeyVisible = !apiKeyVisible;
+  document.getElementById('api-key-display').textContent = apiKeyVisible ? currentApiKey : '••••••••••••••••••••••••••';
+  updateExampleUrls();
+}
+
+function copyApiKey() {
+  copyText(currentApiKey);
+}
+
+function changeApiKey() {
+  const newKey = document.getElementById('new-api-key').value.trim();
+  if (!newKey || newKey.length < 8) return alert('الـ Key خاصو يكون على الأقل 8 حروف!');
+  if (!confirm(`تأكد تغيير الـ API Key؟\nالجديد: ${newKey}\n\n⚠️ خاصك تحدث n8n و ManyChat بالـ Key الجديد!`)) return;
+  currentApiKey = newKey;
+  localStorage.setItem(API_KEY_STORAGE, newKey);
+  document.getElementById('new-api-key').value = '';
+  apiKeyVisible = true;
+  document.getElementById('api-key-display').textContent = currentApiKey;
+  updateExampleUrls();
+  alert('✅ تم تغيير الـ API Key! لا تنسى تحدثو فـ n8n و ManyChat');
+}
+
+function updateExampleUrls() {
+  const key = apiKeyVisible ? currentApiKey : '••••';
+  document.getElementById('example-url').textContent = `http://5.189.170.55:4000/api/v1/products?api_key=${key}`;
+  document.getElementById('manychat-url').textContent = `http://5.189.170.55:4000/api/v1/webhook/message?api_key=${key}`;
+}
+
+function copyEndpoint(path) {
+  copyText(`http://5.189.170.55:4000${path}?api_key=${currentApiKey}`);
+}
+
+function copyExampleUrl() {
+  copyText(`http://5.189.170.55:4000/api/v1/products?api_key=${currentApiKey}`);
+}
+
+function copyManychatUrl() {
+  copyText(`http://5.189.170.55:4000/api/v1/webhook/message?api_key=${currentApiKey}`);
+}
+
+// TRAINING - Chat Style
+let trainingMsgType = 'user';
+let trainingMsgs = [];
+
+function setMsgType(type) {
+  trainingMsgType = type;
+  const textarea = document.getElementById('training-msg-text');
+
+  if (type === 'user') {
+    // أخضر = سؤال زبون
+    document.getElementById('type-btn-user').style.cssText = 'flex:1;padding:12px;border-radius:10px;border:2px solid #166534;background:#052e16;color:#4ade80;cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;font-size:0.9rem;';
+    document.getElementById('type-btn-assistant').style.cssText = 'flex:1;padding:12px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;font-size:0.9rem;';
+    textarea.style.cssText = 'height:100px;width:100%;background:#052e16;border:2px solid #166534;color:#4ade80;padding:12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:0.9rem;resize:vertical;';
+    textarea.placeholder = '👤 اكتب سؤال الزبون... (أخضر = زبون)';
+  } else {
+    // بيضة فاتحة = جواب AI
+    document.getElementById('type-btn-user').style.cssText = 'flex:1;padding:12px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;font-size:0.9rem;';
+    document.getElementById('type-btn-assistant').style.cssText = 'flex:1;padding:12px;border-radius:10px;border:2px solid #d1fae5;background:#f0fdf4;color:#065f46;cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;font-size:0.9rem;';
+    textarea.style.cssText = 'height:100px;width:100%;background:#f0fdf4;border:2px solid #a7f3d0;color:#065f46;padding:12px;border-radius:10px;font-family:Cairo,sans-serif;font-size:0.9rem;resize:vertical;';
+    textarea.placeholder = '🤖 اكتب جواب AI... (أبيض = AI)';
+  }
+}
+
+function addTrainingMsg() {
+  const text = document.getElementById('training-msg-text').value.trim();
+  if (!text) return;
+  trainingMsgs.push({ role: trainingMsgType, text });
+  document.getElementById('training-msg-text').value = '';
+  // تبدل تلقائياً للنوع الآخر
+  setMsgType(trainingMsgType === 'user' ? 'assistant' : 'user');
+  renderTrainingPreview();
+}
+
+function renderTrainingPreview() {
+  const container = document.getElementById('training-preview');
+  if (!trainingMsgs.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.82rem;padding:16px;">ابدأ بإضافة رسائل 👆</div>';
+    return;
+  }
+  container.innerHTML = trainingMsgs.map((m,i) => `
+    <div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};margin-bottom:8px;gap:6px;align-items:flex-start;">
+      ${m.role==='assistant'?'<span style="font-size:1rem;margin-top:6px;">🤖</span>':''}
+      <div style="max-width:82%;background:${m.role==='user'?'#052e16':'#f0fdf4'};border:1.5px solid ${m.role==='user'?'#166534':'#a7f3d0'};color:${m.role==='user'?'#4ade80':'#065f46'};padding:9px 13px;border-radius:12px;font-size:0.86rem;">
+        ${m.text}
+        <button onclick="removeTrainingMsg(${i})" style="background:rgba(239,68,68,0.15);border:none;cursor:pointer;color:#ef4444;font-size:0.7rem;padding:1px 6px;border-radius:4px;margin-right:8px;vertical-align:middle;">✕</button>
+      </div>
+      ${m.role==='user'?'<span style="font-size:1rem;margin-top:6px;">👤</span>':''}
+    </div>`).join('');
+}
+
+function removeTrainingMsg(i) { trainingMsgs.splice(i,1); renderTrainingPreview(); }
+function clearTrainingMsgs() { trainingMsgs = []; renderTrainingPreview(); }
+
+async function saveTrainingMsgs() {
+  if (trainingMsgs.length < 2) return alert('خاصك على الأقل سؤال وجواب!');
+  const category = document.getElementById('training-category').value;
+  let saved = 0;
+  for (let i = 0; i < trainingMsgs.length - 1; i++) {
+    if (trainingMsgs[i].role === 'user' && trainingMsgs[i+1].role === 'assistant') {
+      await api('/api/training', 'POST', { question: trainingMsgs[i].text, correct_answer: trainingMsgs[i+1].text, category });
+      await api('/api/conversations', 'POST', { category, customer_message: trainingMsgs[i].text, correct_reply: trainingMsgs[i+1].text });
+      saved++;
+    }
+  }
+  if (saved > 0) { clearTrainingMsgs(); loadTraining(); alert(`✅ تم! AI تعلم ${saved} سؤال/جواب 🧠`); }
+  else alert('⚠️ خاص يكون ترتيب: سؤال ← جواب ← سؤال ← جواب...');
+}
+
+// QUICK TRAINING (للتوافقية)
+async function quickAddTraining() { await saveTrainingMsgs(); }
+
+// ======= PIPELINE & SCORING =======
+let chatMessages = [];
+let lastAiQuestion = '';
+let lastAiAnswer = '';
+
+async function sendAiMessage() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  lastAiQuestion = msg;
+
+  const container = document.getElementById('ai-chat-container');
+  container.innerHTML += `<div style="display:flex;justify-content:flex-end"><div class="chat-bubble user">${msg}</div></div>`;
+  container.scrollTop = container.scrollHeight;
+
+  document.getElementById('ai-typing').style.display = 'block';
+  chatMessages.push({ role: 'user', content: msg });
+
+  try {
+    const stats = await api('/api/stats');
+    const products = await api('/api/products');
+    const available = products?.filter(p => p.status === 'available') || [];
+
+    const systemPrompt = `أنت مساعد AI لـ AykoShop. المنتجات المتاحة: ${available.map(p => p.product_name + ' ب' + p.price).join(', ')||'لا يوجد'}. زبائن: ${stats?.customers||0}. رسائل اليوم: ${stats?.messages_today||0}. أجب بالدارجة المغربية أو الفصحى أو الإنجليزية حسب لغة السؤال. جملتين فقط.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages: chatMessages })
+    });
+    const data = await response.json();
+    const reply = data.content?.[0]?.text || 'عذراً حدث خطأ.';
+    lastAiAnswer = reply;
+    chatMessages.push({ role: 'assistant', content: reply });
+
+    document.getElementById('ai-typing').style.display = 'none';
+    container.innerHTML += `<div style="display:flex;justify-content:flex-start"><div class="chat-bubble assistant">${reply.replace(/\n/g,'<br>')}</div></div>`;
+    container.scrollTop = container.scrollHeight;
+
+    // تحديث لوح التصحيح
+    document.getElementById('correction-panel').innerHTML = `
+      <div style="margin-bottom:12px;">
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;">👤 سؤال:</div>
+        <div style="background:rgba(79,70,229,0.1);padding:10px;border-radius:8px;font-size:0.88rem;">${lastAiQuestion}</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;">🤖 جواب AI:</div>
+        <div style="background:var(--card2);padding:10px;border-radius:8px;font-size:0.88rem;">${lastAiAnswer}</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button class="btn btn-success" style="flex:1;" onclick="markCorrect()">✅ جواب صحيح</button>
+        <button class="btn btn-danger" style="flex:1;" onclick="showCorrection()">❌ جواب غلط</button>
+      </div>
+      <div id="correction-form" style="display:none;">
+        <div class="form-group">
+          <label>الجواب الصحيح:</label>
+          <textarea id="correct-reply" style="height:80px;width:100%;background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:10px;border-radius:8px;font-family:'Cairo',sans-serif;">${lastAiAnswer}</textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <select id="correction-category" style="background:#0a0e1a;border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:8px;font-family:'Cairo',sans-serif;flex:1;">
+            <option value="general">🌐 عام</option>
+            <option value="شراء">🛒 شراء</option>
+            <option value="دفع">💳 دفع</option>
+            <option value="دعم">🛠️ دعم</option>
+          </select>
+          <button class="btn btn-primary" style="flex:1;" onclick="saveCorrection()">💾 صحح وعلم AI</button>
+        </div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('ai-typing').style.display = 'none';
+    document.getElementById('ai-chat-container').innerHTML += `<div style="display:flex;justify-content:flex-start"><div class="chat-bubble assistant">خطأ في الاتصال 😕</div></div>`;
+  }
+}
+
+function markCorrect() {
+  // نحفظ كمثال صحيح
+  api('/api/conversations', 'POST', { category: 'general', customer_message: lastAiQuestion, correct_reply: lastAiAnswer });
+  document.getElementById('correction-panel').innerHTML += '<div class="alert alert-success" style="margin-top:10px;">✅ تم الحفظ كجواب صحيح!</div>';
+}
+
+function showCorrection() {
+  document.getElementById('correction-form').style.display = 'block';
+}
+
+async function saveCorrection() {
+  const correctReply = document.getElementById('correct-reply').value.trim();
+  const category = document.getElementById('correction-category').value;
+  if (!correctReply) return alert('الجواب مطلوب!');
+  await api('/api/training', 'POST', { question: lastAiQuestion, correct_answer: correctReply, category });
+  await api('/api/conversations', 'POST', { category, customer_message: lastAiQuestion, correct_reply: correctReply });
+  document.getElementById('correction-panel').innerHTML += '<div class="alert alert-success" style="margin-top:10px;">✅ تم التصحيح! AI تعلم 🧠</div>';
+}
+
+// EXTERNAL APIs
+const EXT_APIS_KEY = 'ayko_external_apis';
+
+function getExternalApis() {
+  try { return JSON.parse(localStorage.getItem(EXT_APIS_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function renderExternalApis() {
+  const apis = getExternalApis();
+  const list = document.getElementById('external-apis-list');
+  if (!list) return;
+  if (!apis.length) {
+    list.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:10px 0;">لا توجد APIs محفوظة بعد</div>';
+    return;
+  }
+  const icons = { manychat:'🤖', openai:'🧠', telegram:'📱', n8n:'⚙️', other:'🌐' };
+  list.innerHTML = apis.map((a, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:1.2rem;">${icons[a.platform]||'🌐'}</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:0.88rem;">${a.name || a.platform}</div>
+        <div style="font-family:monospace;font-size:0.75rem;color:var(--text-muted);">••••••••••••${a.key.slice(-4)}</div>
+      </div>
+      <button class="copy-btn" onclick="copyText('${a.key}')">📋 نسخ</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteExternalApi(${i})">🗑️</button>
+    </div>`).join('');
+}
+
+function saveExternalApi() {
+  const platform = document.getElementById('ext-platform').value;
+  const name = document.getElementById('ext-name').value.trim() || platform;
+  const key = document.getElementById('ext-key').value.trim();
+  if (!key) return alert('الـ Key مطلوب!');
+  const apis = getExternalApis();
+  apis.push({ platform, name, key });
+  localStorage.setItem(EXT_APIS_KEY, JSON.stringify(apis));
+  document.getElementById('ext-key').value = '';
+  document.getElementById('ext-name').value = '';
+  renderExternalApis();
+  alert(`✅ تم حفظ ${name}!`);
+}
+
+function deleteExternalApi(i) {
+  if (!confirm('تأكد الحذف؟')) return;
+  const apis = getExternalApis();
+  apis.splice(i, 1);
+  localStorage.setItem(EXT_APIS_KEY, JSON.stringify(apis));
+  renderExternalApis();
+}
+
+// ======= PIPELINE =======
+async function loadErrors() {
+  try {
+    const data = await api('/api/workflow-errors') || [];
+    const total = data.length;
+    const pending = data.filter(e=>!e.resolved).length;
+    const resolved = data.filter(e=>e.resolved).length;
+
+    document.getElementById('errors-total').textContent = total;
+    document.getElementById('errors-pending').textContent = pending;
+    document.getElementById('errors-resolved').textContent = resolved;
+
+    // Update badge
+    if (pending > 0) {
+      document.getElementById('errors-badge').textContent = pending;
+      document.getElementById('errors-badge').style.display = 'inline-block';
+    } else {
+      document.getElementById('errors-badge').style.display = 'none';
+    }
+
+    const list = document.getElementById('errors-list');
+    if (!data.length) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>لا توجد أخطاء - كل شي يعمل مزيان!</p></div>';
+      return;
+    }
+
+    list.innerHTML = data.map(e => `
+      <div class="error-item ${e.resolved?'resolved':''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div>
+            <span class="badge ${e.resolved?'resolved':'error'}">${e.resolved?'✅ محلول':'❌ خطأ'}</span>
+            <strong style="margin-right:10px;color:#fff;">${e.workflow_name||'Workflow'}</strong>
+          </div>
+          <span style="font-size:0.78rem;color:var(--text-muted)">${e.started_at?new Date(e.started_at).toLocaleString('ar'):''}</span>
+        </div>
+        <div style="font-size:0.86rem;color:var(--danger);margin-bottom:6px;">❌ ${e.error_message||'خطأ غير معروف'}</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);">📍 Node: ${e.error_node||'-'}</div>
+        ${!e.resolved?`<div style="margin-top:10px;"><button class="btn btn-success btn-sm" onclick="resolveError(${e.id})">✅ تعليم كمحلول</button></div>`:''}
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('errors-list').innerHTML = '<div class="alert alert-warning">⚠️ لم يتم إنشاء جدول الأخطاء بعد. شغل workflow "AykoShop Error Monitor" أولاً.</div>';
+  }
+}
+
+async function resolveError(id) {
+  await api(`/api/workflow-errors/${id}/resolve`,'PATCH');
+  loadErrors();
+}
+
+// Auto check errors every minute
+setInterval(async () => {
+  try {
+    const data = await api('/api/workflow-errors');
+    const pending = data?.filter(e=>!e.resolved).length || 0;
+    const badge = document.getElementById('errors-badge');
+    if (pending > 0) { badge.textContent=pending; badge.style.display='inline-block'; }
+    else badge.style.display='none';
+  } catch(e) {}
+}, 60000);
+
+// Auto check unknown questions every minute
+setInterval(async () => {
+  try {
+    const data = await api('/api/unknown-questions');
+    const pending = data?.filter(q=>!q.learned).length || 0;
+    const badge = document.getElementById('unknown-badge');
+    if (pending > 0) { badge.textContent=pending; badge.style.display='inline-block'; }
+    else badge.style.display='none';
+  } catch(e) {}
+}, 60000);
+
+// Init
+checkAuth().then(ok => { if (ok) loadOverview(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{
+  "name": "AykoShop Get History",
+  "nodes": [
+    {
+      "id": "afac98cf-de17-48c6-baf4-e8d786254b10",
+      "name": "Get History Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aykoshop-get-history",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "1e314b17-e6f6-4611-9ea0-813f6d752852",
+      "name": "Get Chat History",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [224, 0],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT role, message FROM aykoshop_chat_history WHERE subscriber_id = '{{ $json.body.subscriber_id }}' ORDER BY created_at DESC LIMIT 10",
+        "options": {"continueOnFail": true}
+      }
+    },
+    {
+      "id": "68fa24b2-36be-437a-a53e-7449518a4be2",
+      "name": "Build History Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [448, 0],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const rows = $input.all();\nconst history = rows.reverse().map(r => ({ role: r.json.role, content: r.json.message }));\nreturn [{ json: { history } }];"
+      }
+    },
+    {
+      "id": "b40aa59f-e2aa-494d-86fe-08b4eb04e813",
+      "name": "Respond With History",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [672, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Get History Webhook": {"main": [[{"node": "Get Chat History", "type": "main", "index": 0}]]},
+    "Get Chat History": {"main": [[{"node": "Build History Response", "type": "main", "index": 0}]]},
+    "Build History Response": {"main": [[{"node": "Respond With History", "type": "main", "index": 0}]]}
+  },
+  "active": true,
+  "settings": {"executionOrder": "v1"}
+}

@@ -1,0 +1,181 @@
+{
+  "name": "AykoShop AI Learning System",
+  "description": "مكتبة محادثات للتعلم - يضيف أمثلة ويجيبها للـ AI",
+  "active": true,
+  "nodes": [
+    {
+      "id": "74bade6d",
+      "name": "Add Conversation Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aykoshop-add-conversation",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "7cc6e160",
+      "name": "Save Conversation",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO aykoshop_conversation_examples (category, customer_message, correct_reply, source, subscriber_id) VALUES ('{{ $json.body.category || \"general\" }}', '{{ $json.body.customer_message.replace(/\\'/, \"\\'\\'\") }}', '{{ $json.body.correct_reply.replace(/\\'/, \"\\'\\'\") }}', 'manual', '{{ $json.body.subscriber_id || \"\" }}');",
+        "options": {
+          "continueOnFail": true
+        }
+      }
+    },
+    {
+      "id": "96a33d06",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"status\": \"ok\", \"saved\": true }",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "46d9d227",
+      "name": "Get Examples Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        224
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aykoshop-get-examples",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "af066e33",
+      "name": "Fetch Examples",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        224
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT category, customer_message, correct_reply FROM aykoshop_conversation_examples WHERE approved = true ORDER BY created_at DESC LIMIT 20",
+        "options": {
+          "continueOnFail": true
+        }
+      }
+    },
+    {
+      "id": "667e3e26",
+      "name": "Format Examples",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        224
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst examples = items.map(i => i.json);\nconst grouped = {};\nfor (const ex of examples) {\n  const cat = ex.category || 'general';\n  if (!grouped[cat]) grouped[cat] = [];\n  grouped[cat].push({ customer: ex.customer_message, reply: ex.correct_reply });\n}\nlet examplesText = '';\nfor (const [cat, convs] of Object.entries(grouped)) {\n  examplesText += '\\n--- أمثلة ' + cat + ' ---\\n';\n  for (const conv of convs.slice(0, 3)) { examplesText += 'زبون: ' + conv.customer + '\\nجواب: ' + conv.reply + '\\n'; }\n}\nreturn [{ json: { examples, examples_text: examplesText, count: examples.length } }];"
+      }
+    },
+    {
+      "id": "8fb6e82a",
+      "name": "Respond Examples",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        224
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ examples: $json.examples, examples_text: $json.examples_text, count: $json.count }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Add Conversation Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Conversation": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Examples Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Examples",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Examples": {
+      "main": [
+        [
+          {
+            "node": "Format Examples",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Examples": {
+      "main": [
+        [
+          {
+            "node": "Respond Examples",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "aykoshop-ai-seller",
+  "version": "2.1.0",
+  "description": "AykoShop AI Seller - Complete AI-powered CRM & Sales Dashboard",
+  "main": "api/server.js",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "nodemon api/server.js",
+    "pm2": "pm2 start api/server.js --name aykoshop-api",
+    "pm2:restart": "pm2 restart aykoshop-api",
+    "pm2:logs": "pm2 logs aykoshop-api"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["ai", "crm", "sales", "manychat", "n8n", "openai", "whatsapp"],
+  "author": "Ayoub Akarfi",
+  "license": "MIT"
+}

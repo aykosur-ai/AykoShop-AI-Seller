@@ -1,0 +1,1616 @@
+{
+  "name": "AykoShop AI Seller - PostgreSQL",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "aykoshop-manychat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c8229dc5-7f2b-4347-b659-1b0e36a3a494",
+      "name": "Meta Verify Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "5b770009-1411-4720-a33b-4b6f719b5221"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst query = $input.first().json.query || {};\nif (query['hub.mode'] === 'subscribe' && query['hub.verify_token'] === 'ayoub_verify_2026') return [{ json: { challenge: query['hub.challenge'] } }];\nreturn [{ json: { challenge: 'invalid' } }];\n"
+      },
+      "id": "d1be8473-8f82-47ed-8c95-fb6a367c5ff8",
+      "name": "Verify Meta Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "c94f2201-f9d7-4c17-9a1d-cfc91998bd6d",
+      "name": "Respond Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "channel_post",
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "f89928d0-0d11-44eb-81b6-30ec8c7c55ab",
+      "name": "Telegram Channel Post",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1792,
+        1616
+      ],
+      "webhookId": "5155c105-c272-4ba2-9933-6ba2ec65ef74",
+      "credentials": {
+        "telegramApi": {
+          "id": "WzPPLbXCLAtVVuJb",
+          "name": "aykoshop"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst data = $input.first().json;\nconst msg = data.channel_post || data.message || {};\nconst text = msg.text || msg.caption || '';\nconst hasPhoto = msg.photo && msg.photo.length > 0;\nconst chatId = String(msg.chat?.id || msg.from?.id || '6990881479');\nconst allowed = chatId === '6990881479' || chatId === '-1003963679572';\nif (text === '/setheaders' && allowed) return [{ json: { command: 'setheaders', chat_id: chatId, raw: data } }];\nif (text === '/clearall' && allowed) return [{ json: { command: 'clearall', chat_id: chatId, raw: data } }];\nif (text.startsWith('/delete ') && allowed) return [{ json: { command: 'delete', delete_id: text.replace('/delete ', '').trim(), chat_id: chatId, raw: data } }];\nif (text.startsWith('/stopchat ')) return [{ json: { command: 'stopchat', subscriber_id: text.replace('/stopchat ', '').trim(), chat_id: '6990881479', raw: data } }];\nif (text.startsWith('/publicchat ')) return [{ json: { command: 'publicchat', subscriber_id: text.replace('/publicchat ', '').trim(), chat_id: '6990881479', raw: data } }];\nif (text.startsWith('/sold ')) return [{ json: { command: 'sold', sold_id: text.replace('/sold ', '').trim(), chat_id: '6990881479', raw: data } }];\nif (hasPhoto) return [{ json: { command: 'channel_post', chat_id: '6990881479', raw: data } }];\nreturn [{ json: { command: 'ignore', raw: data } }];\n"
+      },
+      "id": "5b69fb29-f8b6-4d50-9233-1ded7c90cc61",
+      "name": "Check Telegram Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        1616
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.command }}",
+              "rightValue": "sold",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6975d288-3259-49b3-b99b-4b860d06d7f3",
+      "name": "Is Sold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE aykoshop_products SET status='sold',sold_at=NOW(),updated_at=NOW() WHERE id={{ $(\"Check Telegram Command\").item.json.sold_id }}",
+        "options": {}
+      },
+      "id": "c90eb61a-9869-4311-8a05-9535c2a1a825",
+      "name": "Mark Sold PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2464,
+        1136
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mjgSjYbNoTvtck3V",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chat_id\": \"6990881479\", \"text\": \"✅ تبيعات! ID: {{ $(\"Check Telegram Command\").item.json.sold_id }}\" }",
+        "options": {}
+      },
+      "id": "a90e7e63-5a05-4aa4-8c3e-0e254fc8317b",
+      "name": "Confirm Sold",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2688,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.command }}",
+              "rightValue": "clearall",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3d06d965-d83a-4621-823a-69e7332daf89",
+      "name": "Is ClearAll?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2464,
+        1616
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM aykoshop_products WHERE id > 0",
+        "options": {}
+      },
+      "id": "ec8885a3-0f28-4d04-9c69-ac64887c9cc5",
+      "name": "Clear All PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2688,
+        1328
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mjgSjYbNoTvtck3V",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"chat_id\": \"6990881479\", \"text\": \"🗑️ تم مسح جميع المنتجات ✅\" }",
+        "options": {}
+      },
+      "id": "b57cac69-4f8a-494a-b993-0904e50ae5c2",
+      "name": "Confirm Clear All",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2912,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.command }}",
+              "rightValue": "delete",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d421d586-e991-4d7f-9ca1-d6695b2a8a45",
+      "name": "Is Delete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2688,
+        1712
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM aykoshop_products WHERE id={{ $(\"Check Telegram Command\").item.json.delete_id }}",
+        "options": {}
+      },
+      "id": "c5b11cb0-2d37-401f-8ad1-29b815cc8030",
+      "name": "Delete PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2912,
+        1520
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mjgSjYbNoTvtck3V",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chat_id\": \"6990881479\", \"text\": \"🗑️ تمسحات ✅ ID: {{ $(\"Check Telegram Command\").item.json.delete_id }}\" }",
+        "options": {}
+      },
+      "id": "9bee718a-84d0-4f7c-92b1-d784bd5ee06b",
+      "name": "Confirm Delete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3136,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.command }}",
+              "rightValue": "setheaders",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d8e81d6c-35f7-46f4-9e26-de6e610429a4",
+      "name": "Is SetHeaders?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2912,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"chat_id\": \"6990881479\", \"text\": \"📋 Columns: id|product_name|price|image_url|whatsapp_url|category|status\" }",
+        "options": {}
+      },
+      "id": "6655a8a6-a48a-46cf-b6dc-10d2e2edd07c",
+      "name": "Set Headers Direct",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3136,
+        1712
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst cmdData = $('Check Telegram Command').first().json;\nconst raw = cmdData.raw || {};\nconst msg = raw.channel_post || raw.message || {};\nconst caption = msg.caption || '';\nconst photos = msg.photo || [];\nconst fileId = photos.length > 0 ? photos[photos.length - 1].file_id : '';\nconst messageId = msg.message_id || '';\nif (!fileId) return [{ json: { skip: true, reason: 'no_photo' } }];\nif (!caption || caption.length < 3) return [{ json: { skip: true, reason: 'no_caption' } }];\nconst priceMatch = caption.match(/[\\d,]+\\s*(?:DH|dh|درهم)/i);\nconst price = priceMatch ? priceMatch[0].toUpperCase() : '';\nconst waMatch = caption.match(/WA:\\s*(https?:\\/\\/\\S+)/i);\nconst whatsappUrl = waMatch ? waMatch[1].trim() : '';\nconst igMatch = caption.match(/IG:\\s*(https?:\\/\\/\\S+)/i);\nconst instagramUrl = igMatch ? igMatch[1].trim() : '';\nconst imgMatch = caption.match(/IMG:\\s*(https?:\\/\\/\\S+)/i);\nconst imgUrl = imgMatch ? imgMatch[1].trim() : '';\nconst catMatch = caption.match(/CAT:\\s*([^\\n]+)/i);\nconst category = catMatch ? catMatch[1].trim() : '';\nconst lines = caption.split('\\n').filter(l => { const t = l.trim(); return t && !t.match(/^WA:/i) && !t.match(/^IG:/i) && !t.match(/^CAT:/i) && !t.match(/^IMG:/i) && !t.startsWith('#'); });\nconst productName = lines[0] ? lines[0].replace(/[🎮🎯🔥⭐💰🎁✅❌]/g, '').trim() : 'منتج';\nconst description = lines.slice(1).join(' ').replace(/\\n/g, ' ').trim();\nreturn [{ json: { skip: false, product_name: productName || 'منتج', price, description, file_id: fileId, message_id: String(messageId), whatsapp_url: whatsappUrl, instagram_url: instagramUrl, img_url: imgUrl, category, status: 'available' } }];\n"
+      },
+      "id": "f4fcc03a-7edd-433d-804a-e3bfdc5509f6",
+      "name": "Extract Product Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        1904
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "89a57a91-beca-4ba5-9030-ad0d733ae1d2",
+      "name": "Has Photo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3360,
+        1904
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"status\": \"ok\" }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "7b91e311-9562-4621-a359-286f6f501247",
+      "name": "Messenger Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3584,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/getFile?file_id={{ $json.file_id }}",
+        "options": {}
+      },
+      "id": "bcc8f576-3a02-416d-ab72-e012bd224b4d",
+      "name": "Get Telegram File URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3584,
+        1952
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/file/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/{{ $json.result.file_path }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "0a095636-c5e9-404f-bd3e-9c103e911157",
+      "name": "Download Photo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3808,
+        1952
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $(\"Extract Product Info\").item.json.product_name }}_{{ $(\"Extract Product Info\").item.json.message_id }}.jpg",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "root",
+          "value": "root"
+        },
+        "options": {}
+      },
+      "id": "d4a1b56a-1fbc-4153-9fb6-f306c312c579",
+      "name": "Upload to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4032,
+        1952
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "qBZ0Egj0KFwhaJk9",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst driveFileId = $json.id || '';\nconst driveUrl = driveFileId ? 'https://drive.google.com/uc?id=' + driveFileId : '';\nconst productInfo = $('Extract Product Info').first().json;\nconst imageUrl = productInfo.img_url || driveUrl;\nconst response = await this.helpers.httpRequest({ method: 'POST', url: 'http://5.189.170.55:4000/api/products/add', headers: { 'Content-Type': 'application/json' }, body: { product_name: productInfo.product_name, price: productInfo.price, description: productInfo.description, image_url: imageUrl, whatsapp_url: productInfo.whatsapp_url || '', instagram_url: productInfo.instagram_url || '', category: productInfo.category || '', status: 'available' } });\nreturn [{ json: { saved: true, product_name: productInfo.product_name, price: productInfo.price, category: productInfo.category, image_url: imageUrl } }];\n"
+      },
+      "id": "1c390bf6-5d95-4372-acfd-ce1808b05e09",
+      "name": "Save To PostgreSQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        1952
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chat_id\": \"6990881479\", \"text\": \"✅ سلعة جديدة!\\n📦 {{ $json.product_name }}\\n💰 {{ $json.price }}\\n🏷️ {{ $json.category }}\" }",
+        "options": {}
+      },
+      "id": "bc8149bd-99c1-443c-98cd-7d71eec47b58",
+      "name": "Notify New Product",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4480,
+        1952
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DO $$ BEGIN IF '{{ $(\"Check Telegram Command\").item.json.command }}' = 'stopchat' THEN INSERT INTO aykoshop_stopped_chats (subscriber_id, reason) VALUES ('{{ $(\"Check Telegram Command\").item.json.subscriber_id }}', 'stopped by admin') ON CONFLICT (subscriber_id) DO UPDATE SET stopped_at = NOW(); ELSIF '{{ $(\"Check Telegram Command\").item.json.command }}' = 'publicchat' THEN DELETE FROM aykoshop_stopped_chats WHERE subscriber_id = '{{ $(\"Check Telegram Command\").item.json.subscriber_id }}'; END IF; END $$;",
+        "options": {}
+      },
+      "id": "89d602f9-25b4-4d94-9668-31460701f046",
+      "name": "Handle Chat Control",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2240,
+        1808
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mjgSjYbNoTvtck3V",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chat_id\": \"6990881479\", \"text\": \"{{ $(\"Check Telegram Command\").item.json.command === 'stopchat' ? '🔇 AI مسكوت ✅' : '🔊 AI رجع ✅' }} - {{ $(\"Check Telegram Command\").item.json.subscriber_id }}\" }",
+        "options": {}
+      },
+      "id": "8a570a26-cfd1-46ed-8ea2-035a3fae99c9",
+      "name": "Confirm Chat Control",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2464,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aykoshop-manychat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "4eef0d3b-2314-424d-8e2d-ad94afb495f0",
+      "name": "ManyChat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        272
+      ],
+      "webhookId": "53c6a5fc-6ad8-4ca8-b98f-b1f0c776750b"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst body = $input.first().json.body || {};\nconst subscriberId = String(body.subscriber_id || body.id || '');\nconst message = body.message || body.last_input_text || body.last_text_input || body.text || body.last_message || '';\nconst firstName = body.first_name || body.full_name || body.name || 'زبون';\nconst channel = body.channel || 'messenger';\nif (!subscriberId || subscriberId.length < 5) return [{ json: { skip: true, reason: 'invalid_id' } }];\nif (/^\\d{4}-\\d{2}-\\d{2}/.test(subscriberId)) return [{ json: { skip: true, reason: 'date_as_id' } }];\nif (!message || message.trim().length === 0) return [{ json: { skip: true, reason: 'empty_message' } }];\nif (body.is_bot || body.from_bot) return [{ json: { skip: true, reason: 'bot_message' } }];\nconst hasAttachment = body.attachments && body.attachments.length > 0;\nconst attachmentUrl = hasAttachment ? body.attachments[0].url || '' : '';\nreturn [{ json: { skip: false, subscriber_id: subscriberId, customer_name: firstName, message, channel, has_attachment: hasAttachment ? 'yes' : 'no', attachment_url: attachmentUrl, wa_phone: body.wa_phone || '' } }];\n"
+      },
+      "id": "19a60f27-2cec-4b13-83a9-db383e8a663a",
+      "name": "Extract Message Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "847b1110-2094-4084-b6a6-b08d3b641afa",
+      "name": "Valid Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst d = $input.first().json;\nlet isStopped = false;\ntry {\n  const result = await this.helpers.httpRequest({ method: 'POST', url: 'https://ayoubakarfi.app.n8n.cloud/webhook/aykoshop-check-stopped', headers: { 'Content-Type': 'application/json' }, body: { subscriber_id: d.subscriber_id } });\n  isStopped = result.stopped === true;\n} catch(e) { isStopped = false; }\nreturn [{ json: { ...d, is_stopped: isStopped } }];\n"
+      },
+      "id": "c2dfaeae-be32-4836-a3ae-eb6bcf2fb9c1",
+      "name": "Check Stopped & Route",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.is_stopped }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4a4661c6-3d8f-4e5a-8715-f7f9382a3962",
+      "name": "Is Chat Stopped?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"status\": \"ok\" }",
+        "options": {}
+      },
+      "id": "74b56a4a-9caa-48be-ac7b-341d92232ba4",
+      "name": "Silent Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $(\"Check Stopped & Route\").item.json.has_attachment }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b3214424-ad26-4a47-a01c-6ca0c0360aa1",
+      "name": "Screenshot or Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Check Stopped & Route').first().json;\nconst imageUrl = d.attachment_url || '';\nconst customerMsg = (d.message || '').toLowerCase();\nconst manychatLink = 'https://app.manychat.com/fb4538388/subscribers/' + d.subscriber_id;\nconst OPENAI_KEY = 'Bearer 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';\n\nconst wantsSell = /نبيع|نسرح|نسرّح|للبيع|باغي نبيع|sell|3ndi compte|بغيت نبيع|نسرحو/i.test(customerMsg);\nconst wantsBuy = /نشري|شراء|بغيت هاد|بغيت هدا|بغيتو|عجبني|عجبتني|نشريه|باغي نشري|buy|بغيت نشري|هادا بغيت|واخا|موافق|نعم/i.test(customerMsg);\n\nif (!imageUrl) {\n  return [{ json: { subscriber_id: d.subscriber_id, customer_name: d.customer_name, channel: d.channel, is_payment: false, image_type: 'none', ai_reply: 'وصلتنا الصورة 😊 شنو تبغي بالضبط؟', manychat_link: manychatLink, customer_message: d.message } }];\n}\n\nlet availInfo = '';\ntry {\n  const pr = await this.helpers.httpRequest({ method: 'GET', url: 'http://5.189.170.55:4000/api/products', headers: { 'Content-Type': 'application/json' } });\n  const list = Array.isArray(pr) ? pr : (pr.products || pr.data || []);\n  const avail = list.filter(p => (p.status === 'available' || !p.status) && p.product_name && p.price);\n  const cats = {};\n  for (const p of avail) {\n    const c = (p.category || p.product_name || 'منتج').trim();\n    if (!cats[c]) cats[c] = p.price;\n  }\n  availInfo = Object.keys(cats).map(c => c + ' (' + cats[c] + ')').join('، ');\n} catch(e) { availInfo = ''; }\n\nlet analysis = '';\ntry {\n  const response = await this.helpers.httpRequest({ method: 'POST', url: 'https://api.openai.com/v1/chat/completions', headers: { 'Authorization': OPENAI_KEY, 'Content-Type': 'application/json' }, body: { model: 'gpt-4o', max_tokens: 300, messages: [ { role: 'system', content: 'حلل الصورة وصنّفها. أجب بصيغة JSON فقط بدون نص آخر:\\n{\"type\":\"payment\"} إذا إيصال/وصل تحويل بنكي أو دفع.\\n{\"type\":\"topup\",\"price\":\"<السعر الظاهر>\",\"currency\":\"<DH أو $ أو €>\"} إذا صورة شحن/باقات ألعاب فيها أسعار واضحة (دياموند، شدات، جواهر).\\n{\"type\":\"account\",\"game\":\"<اسم اللعبة إن ظهر مثل free fire أو pubg>\"} إذا صورة حساب لعبة (سكنات، أسلحة، ملف شخصي، خزنة).' }, { role: 'user', content: [{ type: 'text', text: 'صنّف هذه الصورة:' }, { type: 'image_url', image_url: { url: imageUrl } }] } ] } });\n  analysis = response.choices[0].message.content || '';\n} catch(e) { analysis = ''; }\n\nlet parsed = {};\ntry { parsed = JSON.parse(analysis.replace(/```json|```/g, '').trim()); } catch(e) { parsed = {}; }\nlet imgType = parsed.type || 'account';\n\nif (wantsSell) imgType = 'sell';\nif (wantsBuy && imgType === 'account') imgType = 'buy';\n\nlet isPayment = false;\nlet aiReply = '';\n\nif (imgType === 'payment') {\n  isPayment = true;\n  aiReply = 'وصلنا الـ screenshot ديال التحويل، شكراً 🙏 كنتحققو دابا وغادي نكملو معاك ⏳';\n} else if (imgType === 'topup') {\n  const rawPrice = parseFloat(String(parsed.price || '').replace(/[^\\d.]/g, ''));\n  const currency = parsed.currency || 'DH';\n  if (rawPrice && rawPrice > 0) {\n    const finalPrice = Math.ceil(rawPrice * 1.15);\n    aiReply = '✅ مرحبا! الشحن اللي بغيتي كيكلفك ' + finalPrice + ' ' + currency + ' 🎮 قول ليا واش موافق ونكملو 🙏';\n  } else {\n    aiReply = '📸 وصلتني صورة الشحن! غادي نشوف التفاصيل ونعطيك الثمن دابا 🙏';\n  }\n} else if (imgType === 'sell') {\n  aiReply = '🤝 إيلا بغيتي تبيع حساب، تواصل مباشرة مع المسؤول ديال الشراء على هاد الرقم: +212 632-588578';\n} else if (imgType === 'buy') {\n  aiReply = '✅ نعم هاد الحساب متوفر عندنا! 🎉 طرق الدفع: Cash Plus، Wafacash، CIH Bank، Barid Bank، أو Binance. قول ليا بأشمن طريقة بغيتي تخلص 🙏';\n} else {\n  aiReply = '📸 شفت الصورة ديال الحساب! 🎮 واش بغيتي تبيع هاد الحساب، ولا بغيتي نلقاو ليك واحد بحالو؟ 🙏';\n}\n\nreturn [{ json: { subscriber_id: d.subscriber_id, customer_name: d.customer_name, channel: d.channel, is_payment: isPayment, image_type: imgType, ai_reply: aiReply, manychat_link: manychatLink, customer_message: d.message } }];"
+      },
+      "id": "f03303ea-a5b3-487d-9d74-4f1a3bca1919",
+      "name": "Analyze Image & Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.is_payment }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d28bf065-cd5e-457c-81fa-0d09cd5c9db8",
+      "name": "Payment or Product?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chat_id\": \"6990881479\", \"text\": \"💰 إيصال دفع!\\n👤 {{ $json.customer_name }}\\n📱 {{ $json.channel }}\\n🔇 /stopchat {{ $json.subscriber_id }}\" }",
+        "options": {}
+      },
+      "id": "de3819a3-8425-45e0-a938-830e6f3a3b4f",
+      "name": "Payment Image Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1792,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ version: \"v2\", content: { type: $json.channel === \"instagram\" ? \"instagram\" : \"whatsapp\", messages: [{ type: \"text\", text: $json.ai_reply }] } }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "71270529-2173-4d41-874e-54341abfb744",
+      "name": "Image Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chat_id\": \"6990881479\", \"text\": \"📸 صورة من زبون!\\n👤 {{ $json.customer_name }}\\n📱 {{ $json.channel }}\\n🔇 /stopchat {{ $json.subscriber_id }}\" }",
+        "options": {}
+      },
+      "id": "e708e663-1b2f-4435-9f67-aa1aff77774e",
+      "name": "Product Image Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1792,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst d = $('Check Stopped & Route').first().json;\nconst msg = d.message.toLowerCase().trim();\nfunction fuzzyMatch(str, target) {\n  str = str.toLowerCase(); target = target.toLowerCase();\n  if (str.includes(target) || target.includes(str)) return true;\n  let matches = 0;\n  const minLen = Math.min(str.length, target.length);\n  for (let i = 0; i < minLen; i++) { if (str[i] === target[i]) matches++; }\n  return matches / Math.max(str.length, target.length) > 0.6;\n}\nconst productKeywords = [\n  { keywords: ['free fire', 'فري فاير', 'freefire', 'فريفاير', 'فاير', 'ff'], product: 'free fire', emoji: '🎮' },\n  { keywords: ['pubg', 'ببجي', 'بوبجي'], product: 'pubg', emoji: '🎮' },\n  { keywords: ['netflix', 'نتفليكس'], product: 'netflix', emoji: '🎬' },\n  { keywords: ['spotify', 'سبوتيفاي'], product: 'spotify', emoji: '🎵' },\n  { keywords: ['youtube', 'يوتيوب'], product: 'youtube', emoji: '▶️' },\n  { keywords: ['شاهد', 'shahed'], product: 'شاهد', emoji: '📺' },\n  { keywords: ['canva', 'كانفا'], product: 'canva', emoji: '🎨' },\n  { keywords: ['vpn'], product: 'vpn', emoji: '🔒' },\n];\nlet detectedProduct = '', detectedEmoji = '';\nconst words = msg.split(/\\s+/);\nfor (const item of productKeywords) {\n  for (const kw of item.keywords) {\n    if (msg.includes(kw)) { detectedProduct = item.product; detectedEmoji = item.emoji; break; }\n    for (const word of words) {\n      if (word.length > 2 && fuzzyMatch(word, kw)) { detectedProduct = item.product; detectedEmoji = item.emoji; break; }\n    }\n    if (detectedProduct) break;\n  }\n  if (detectedProduct) break;\n}\nlet intent = 'general', alertNeeded = false, alertEmoji = '', alertReason = '';\nif (/خلص|خالص|دفع|حول|paid|pay|sent|done|تم|وصل|صفيت|transfer/.test(msg)) { intent = 'payment'; alertNeeded = true; alertEmoji = '💰'; alertReason = 'زبون قال خلصت'; }\nelse if (/باغي|بغيت|نشري|شراء|buy|want|بغي|اريد|أريد|بدي|عاوز|ابي/.test(msg)) { intent = 'buyer'; alertNeeded = true; alertEmoji = '🔥'; alertReason = 'باغي يشري!'; }\nelse if (/مشكل|مشكلة|ما خدمش|خايب|problem|help|مساعدة/.test(msg)) { intent = 'support'; alertNeeded = true; alertEmoji = '⚠️'; alertReason = 'عندو مشكل'; }\nelse if (/بشحال|شحال|ثمن|سعر|price|كم|تمن|بكم/.test(msg)) { intent = 'price'; }\nelse if (/عندكم|كاين|account|حساب|اكونت|نشوف/.test(msg)) { intent = 'inquiry'; }\nelse if (detectedProduct) { intent = 'inquiry'; }\nif (/باغي|بغيت|نشري|شراء|buy|want|اريد|أريد|بدي|عاوز|ابي/.test(msg)) { intent = 'buyer'; alertNeeded = true; alertEmoji = '🔥'; alertReason = 'باغي يشري!'; }\nconst isYes = /^(نعم|واه|اه|yes|ok|موافق|مزيان|زين|عجبني|باغيه|هيا|يلا|ايه)$/.test(msg) || /^(نعم|واه|اه|yes|ok)\\s/.test(msg);\nconst isNo = /^(لا|لأ|no|مزيانش)$/.test(msg) || /^(لا|لأ|no)\\s/.test(msg);\nconst priceMatch = msg.match(/\\d+/g) || [];\nconst mentionedPrice = priceMatch.length > 0 ? priceMatch[0] : '';\nconst newStage = intent === 'payment' ? 'payment' : intent === 'buyer' ? 'hot' : intent === 'inquiry' || intent === 'price' ? 'warm' : 'cold';\nconst manychatLink = 'https://app.manychat.com/fb4538388/subscribers/' + d.subscriber_id;\nreturn [{ json: { subscriber_id: d.subscriber_id, customer_name: d.customer_name, channel: d.channel, message: d.message, intent, alert_needed: alertNeeded, alert_emoji: alertEmoji, alert_reason: alertReason, new_stage: newStage, detected_product: detectedProduct, detected_emoji: detectedEmoji, is_yes: isYes, is_no: isNo, mentioned_price: mentionedPrice, manychat_link: manychatLink, wa_phone: d.wa_phone } }];\n"
+      },
+      "id": "5b3200b7-4610-40fc-b8c7-9e01b04f3ae9",
+      "name": "Detect Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.intent }}",
+              "rightValue": "payment",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d5230e77-a7de-4e9e-80c3-0a93bb47f701",
+      "name": "Is Payment Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chat_id\": \"6990881479\", \"text\": \"💰 زبون قال خلصت!\\n👤 {{ $json.customer_name }}\\n💬 {{ $json.message }}\\n📱 {{ $json.channel }}\\n🔗 {{ $json.manychat_link }}\\n🔇 /stopchat {{ $json.subscriber_id }}\\n🔊 /publicchat {{ $json.subscriber_id }}\" }",
+        "options": {}
+      },
+      "id": "d91fe4c9-0c95-43e0-b8f8-e0ad36f41aa4",
+      "name": "Payment Text Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1792,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ version: \"v2\", content: { type: $(\"Detect Intent\").item.json.channel === \"instagram\" ? \"instagram\" : $(\"Detect Intent\").item.json.channel === \"whatsapp\" ? \"whatsapp\" : \"facebook\", messages: [{ type: \"text\", text: \"شكراً 🙏 سيفط لينا screenshot ديال التحويل 📸\" }] } }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "fffde345-8bd2-4604-b8fb-8eb4f6b5132a",
+      "name": "Wait For Confirm Reply",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM aykoshop_products WHERE status='available' ORDER BY id DESC",
+        "options": {}
+      },
+      "id": "ae3837ef-d562-4333-b491-a91e3406d524",
+      "name": "Read Products From PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1792,
+        896
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mjgSjYbNoTvtck3V",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allProducts = $('Read Products From PostgreSQL').all();\nconst d = $('Detect Intent').first().json;\nconst OPENAI_KEY = 'Bearer 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';\nconst MANYCHAT_KEY = 'Bearer 4538388:1287b970a69e4c1f0590ca7025c0b50e';\nconst TELEGRAM_BOT = '8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go';\nconst ADMIN_CHAT = '6990881479';\n\nconst PAYMENT_METHODS = {\n  cashplus: `💳 كاش بلس (Cash Plus)\n👤 الاسم: Ayoub Akarfi\n📞 الرقم: 0620250691\n\n📸 بعد الدفع صيفط صورة التحويل هنا وغادي يوصلك الحساب ف5-15 دقيقة 🙏`,\n  wafacash: `💳 وفاكاش (Wafacash)\n👤 الاسم: Ayoub Akarfi\n📞 الرقم: 0620250691\n\n📸 بعد الدفع صيفط صورة التحويل هنا وغادي يوصلك الحساب ف5-15 دقيقة 🙏`,\n  cih: `🏦 CIH Bank\n👤 الاسم: ay ko\n\n🔹 من بنك آخر إلى CIH:\n🔢 RIB: 230380300547221102350017\n\n🔹 من CIH إلى CIH:\n🔢 رقم الحساب: 3005472211023500\n\n📸 بعد الدفع صيفط صورة التحويل هنا وغادي يوصلك الحساب ف5-15 دقيقة 🙏`,\n  barid: `🏦 Barid Bank\n👤 الاسم: ay ko\n🔢 RIB: 350810000000001312260114\n🔢 رقم الحساب: 13122601\n\n📸 بعد الدفع صيفط صورة التحويل هنا وغادي يوصلك الحساب ف5-15 دقيقة 🙏`,\n  binance: `💰 Binance (USDT)\n🆔 ID: 1141018907\n\n📸 بعد الدفع صيفط صورة التحويل هنا وغادي يوصلك الحساب ف5-15 دقيقة 🙏`\n};\n\nconst PAYMENT_ASK = `✅ ممتاز! 🎉\n\n🏦 عندنا هاد طرق الدفع:\n💳 كاش بلس (Cash Plus)\n💳 وفاكاش (Wafacash)\n🏦 CIH Bank\n🏦 Barid Bank\n💰 Binance (USDT)\n\n🙏 قول ليا بأشمن طريقة بغيتي تخلص وغادي نعطيك المعلومات`;\n\nfunction detectPaymentMethod(text) {\n  const t = (text || '').toLowerCase();\n  if (/cash\\s*plus|cashplus|كاش بلس|كاشبلس|كاش/.test(t)) return 'cashplus';\n  if (/wafacash|wafa|وفاكاش|وفا كاش|وفا/.test(t)) return 'wafacash';\n  if (/\\bcih\\b|سيح|سي اي اش/.test(t)) return 'cih';\n  if (/barid|بريد|باريد/.test(t)) return 'barid';\n  if (/binance|بينانس|usdt|crypto|كريبتو/.test(t)) return 'binance';\n  return '';\n}\n\nlet chatHistory = [];\nlet messageCount = 0;\ntry {\n  const pg = await this.helpers.httpRequest({ method: 'POST', url: 'https://ayoubakarfi.app.n8n.cloud/webhook/aykoshop-get-history', headers: { 'Content-Type': 'application/json' }, body: { subscriber_id: d.subscriber_id } });\n  chatHistory = pg.history || [];\n  messageCount = chatHistory.length;\n} catch(e) { chatHistory = []; }\n\nconst channel = d.channel || 'messenger';\nconst available = allProducts.filter(p => p.json.product_name && p.json.price && p.json.status === 'available');\nlet detected = (d.detected_product || '').toLowerCase();\n\nconst wantsAnother = /اخر|آخر|أخرى|اخرى|اخري|akhr|a5er|غير هاد|بدل|بديل|other|another|مختلف/i.test((d.message || '').toLowerCase());\nif ((d.is_yes || d.intent === 'buyer' || d.intent === 'inquiry' || wantsAnother) && !detected) {\n  const kwMap = [\n    { keys: ['free fire','freefire','فري فاير','فاير','ff'], name: 'free fire' },\n    { keys: ['netflix','نتفليكس'], name: 'netflix' },\n    { keys: ['pubg','ببجي'], name: 'pubg' },\n    { keys: ['spotify','سبوتيفاي'], name: 'spotify' },\n    { keys: ['youtube','يوتيوب'], name: 'youtube' },\n    { keys: ['canva','كانفا'], name: 'canva' },\n    { keys: ['vpn'], name: 'vpn' },\n  ];\n  for (const h of chatHistory.slice().reverse()) {\n    const hMsg = (h.message || h.content || '').toLowerCase();\n    for (const item of kwMap) {\n      if (item.keys.some(k => hMsg.includes(k))) { detected = item.name; break; }\n    }\n    if (detected) break;\n  }\n}\n\nconst mentionedPrice = d.mentioned_price || '';\n\nfunction getImgUrl(p) {\n  if (!p) return '';\n  const url = p.json.image_url || '';\n  if (url.startsWith('http')) return url;\n  return '';\n}\nfunction filterByProduct(pool) {\n  if (!detected) return [];\n  return pool.filter(p => { const pn = p.json.product_name.toLowerCase(); const pc = (p.json.category||'').toLowerCase(); return pn.includes(detected)||pc.includes(detected)||detected.split(' ').some(w=>w.length>2&&(pn.includes(w)||pc.includes(w))); });\n}\nfunction filterByPrice(pool, excludeId) {\n  if (!mentionedPrice) return [];\n  const reqNum = parseInt(mentionedPrice);\n  const candidates = excludeId ? pool.filter(p => p.json.id !== excludeId) : pool;\n  const exact = candidates.filter(p => p.json.price && p.json.price.includes(mentionedPrice));\n  if (exact.length > 0) return [exact[0]];\n  const sorted = candidates.filter(p => p.json.price).map(p => ({ ...p, diff: Math.abs(parseInt(p.json.price.replace(/[^\\d]/g,'')) - reqNum) })).sort((a,b) => a.diff - b.diff);\n  return sorted.length > 0 && sorted[0].diff <= 200 ? [sorted[0]] : [];\n}\n\nconst priceAll = filterByPrice(available);\nconst productAll = filterByProduct(available);\nlet pool = productAll.length>0 ? productAll : (priceAll.length>0 ? priceAll : available);\nlet anotherCount = 0;\nfor (const h of chatHistory) {\n  if (h.role === 'user' && /اخر|آخر|أخرى|اخرى|اخري|akhr|a5er|غير هاد|بدل|بديل|other|another|مختلف/i.test((h.message||h.content||'').toLowerCase())) anotherCount++;\n}\nif (wantsAnother) anotherCount++;\nconst rotIdx = pool.length>0 ? (anotherCount % pool.length) : 0;\nconst mainProduct = pool.length>0 ? pool[rotIdx] : null;\n\nconst categories = [...new Set(available.map(p=>p.json.category).filter(Boolean))];\nconst allPrices = [...new Set(available.map(p=>p.json.price).filter(Boolean))].join(', ');\n\nconst isBuying = d.intent === 'buyer' || d.is_yes;\n\nconst askedPaymentBefore = chatHistory.some(h => h.role === 'assistant' && (h.message||h.content||'').includes('بأشمن طريقة'));\nconst shownAccountBefore = chatHistory.some(h => h.role === 'assistant' && (h.message||h.content||'').includes('عجبك'));\nconst approves = /عجبني|عجبتني|موافق|واخا|واخة|wakha|3jbni|3jbatni|نعم|اه|ah|yes|ok|اوكي|زوين|مزيان|هانتا|بغيتو|نشريه|خدو|باغيه/i.test((d.message||'').toLowerCase());\nconst chosenMethod = detectPaymentMethod(d.message);\nconst unavailableMethod = /paypal|باي بال|بايبال|ccp|بطاقة|visa|mastercard|فيزا|western|ويسترن|بنكي|bmce|بنك المغرب|tijari|بنك شعبي|populaire|طريقة اخرى|طريقة أخرى|بريد بنك المغرب/.test((d.message||'').toLowerCase()) && !chosenMethod && askedPaymentBefore;\nconst askedAltBefore = chatHistory.some(h => h.role === 'assistant' && (h.message||h.content||'').includes('طريقة أخرى تقدر تخلص بيها'));\nconst noOtherMethod = /ماعنديش|معنديش|ماكاينش|والو|غير هادي|just|only|فقط|ماعندي والو|هادي اللي عندي/.test((d.message||'').toLowerCase()) && askedAltBefore;\n\nlet specialReply = '';\nlet stopChatNow = false;\nlet alertOverride = false;\n\nif (chosenMethod && askedPaymentBefore) {\n  specialReply = PAYMENT_METHODS[chosenMethod];\n} else if (noOtherMethod) {\n  specialReply = 'مرحبا 🙏 غادي يتواصل معاك مسؤول دابا باش يكمل معاك. شوية ديال الصبر 🙏';\n  stopChatNow = true;\n  alertOverride = true;\n} else if (unavailableMethod) {\n  specialReply = 'هاد الطريقة مازال ماكايناش 🙏 واش عندك شي طريقة أخرى تقدر تخلص بيها من: Cash Plus، Wafacash، CIH، Barid Bank، Binance؟';\n} else if (approves && shownAccountBefore && !askedPaymentBefore) {\n  specialReply = PAYMENT_ASK;\n} else if (isBuying && mainProduct) {\n  specialReply = PAYMENT_ASK;\n}\n\nconst wantsToSee = /نشوف|نشوفو|شوف|ورني|وريني|صورة|صور|عرض|اعرض|نتفرج|montre|photo|image|show|see|خاصني|بغيت حساب|بغيت كونط|كونط|عندكم حساب|عندك حساب|account/i.test((d.message || '').toLowerCase());\n\nlet imageProduct = null;\nif (!chosenMethod && !askedPaymentBefore && !isBuying && !(approves && shownAccountBefore)) {\n  if (d.is_no && mainProduct) {\n    const excludeId = mainProduct.json.id;\n    const altByPrice = filterByPrice(available, excludeId);\n    const altOthers = available.filter(p => p.json.id !== excludeId);\n    imageProduct = altByPrice.length > 0 ? altByPrice[0] : (altOthers.length > 0 ? altOthers[0] : null);\n  } else if ((d.intent === 'inquiry' || wantsAnother || wantsToSee) && mainProduct) {\n    imageProduct = mainProduct;\n  }\n}\n\nconst imageUrl = getImgUrl(imageProduct) || 'NO_IMAGE';\n\nconst productInfo = mainProduct ? mainProduct.json.product_name + ' ب' + mainProduct.json.price : '';\nconst categoriesStr = categories.join(', ');\n\nlet instruction = '';\nif (wantsToSee && mainProduct && !askedPaymentBefore && !chosenMethod) {\n  instruction = 'الزبون بغا يشوف الحساب. ها هي صورة الحساب فوق 👆. اعرض: ' + productInfo + ' بجملة قصيرة حماسية واسأله واش عجبو. لا ترفض أبداً ولا تقل أنك ما تقدرش تعرض صورة - الصورة كتبان معاك.';\n} else if (wantsAnother && mainProduct) {\n  instruction = 'الزبون طلب حساب آخر. اعرض حساب مختلف بنفس الثمن (' + mainProduct.json.price + ') ووري أنه متوفر. اسأله: واش هادا عجبك؟';\n} else if (d.is_no) {\n  const altP = imageProduct || (available.filter(p=>p!==mainProduct)[0] || null);\n  instruction = altP ? 'الزبون رفض. عرض بديل: '+altP.json.product_name+' ب'+altP.json.price : 'اعتذر بأدب.';\n} else if (mentionedPrice && mainProduct) {\n  instruction = 'عرض: ' + productInfo;\n} else if (detected && productAll.length>0 && mainProduct) {\n  instruction = 'الزبون يسأل عن ' + detected + '. اعرض: ' + productInfo + '. اسأله: واش مهتم؟';\n} else if (detected && productAll.length===0) {\n  instruction = detected + ' غير متوفر. عندنا: ' + categoriesStr;\n} else if (d.intent==='inquiry') {\n  instruction = mainProduct ? 'اعرض: ' + productInfo + '. اسأله: واش مهتم؟' : 'اشرح: ' + categoriesStr;\n} else if (d.intent==='price') {\n  instruction = 'الأسعار: ' + allPrices;\n} else if (d.intent==='support') {\n  instruction = 'الزبون عنده مشكلة. ساعده.';\n} else if (messageCount >= 2) {\n  instruction = 'زبون عائد. استقبله بجملة ترحيب مختلفة فقط. لا تذكر منتجات.';\n} else {\n  instruction = 'رحّب بجملة واحدة قصيرة فقط. لا تعرض منتجات حتى يسأل.';\n}\n\nconst systemPrompt = `أنت بائع محترف في AykoShop للمنتجات الرقمية.\nالمنتجات: [${available.map(p=>p.json.product_name+' ب'+p.json.price).join(', ')}]\nقواعد:\n1. اللغة الافتراضية هي العربية الفصحى. لكن إذا كتب الزبون بالدارجة المغربية (حتى بحروف لاتينية مثل: slm, cava, bghit, hdr haka, labas) جاوب بالدارجة، وإذا كتب بالإنجليزية جاوب بالإنجليزية. طابق لغة الزبون.\n2. جملتين قصيرتين فقط - لا أكثر\n3. أنت بائع بشري محترف وذكي - لا تذكر أبداً أنك AI أو بوت\n4. لا تكتب أي رابط أو URL في ردودك أبداً - ممنوع تماماً\n5. لا تقل \"آسف\" أو \"للأسف\" أو \"ما نقدرش\" أو \"ما كاينش\"\n6. كن متنوعاً جداً ومقنعاً في البيع - لا تكرر نفس الجملة أو نفس الترحيب مرتين\n7. طرق الدفع الوحيدة المتاحة هي: Cash Plus، Wafacash، CIH Bank، Barid Bank، Binance. ممنوع منعاً باتاً ذكر أي بنك أو طريقة أخرى (مثل BMCE، التجاري، الشعبي، PayPal، Visa...). لا تذكر مدة التسليم (5-15 دقيقة) إلا في مرحلة الدفع فقط\n8. كي زبون يقول \"سلام/مرحبا/هلا/slm/hi\" => رد بترحيب قصير متنوع فقط، بدون ذكر أي منتج\n9. أنت ترسل صور الحسابات بشكل طبيعي. لا تقل أبداً \"تواصل معنا لعرض الصور\" أو \"لا يمكنني عرض الصورة\" - الصورة تُرسل تلقائياً مع ردك. عند طلب رؤية حساب قدّم الحساب بحماس واسأل إن أعجبه\n${instruction}`;\n\nlet aiReply = '';\nif (specialReply) {\n  aiReply = specialReply;\n} else {\n  const messages = [{ role: 'system', content: systemPrompt }];\n  for (const h of chatHistory.slice(-8)) messages.push({ role: h.role, content: h.message||h.content||'' });\n  messages.push({ role: 'user', content: d.message });\n  const response = await this.helpers.httpRequest({ method: 'POST', url: 'https://api.openai.com/v1/chat/completions', headers: { 'Authorization': OPENAI_KEY, 'Content-Type': 'application/json' }, body: { model: 'gpt-4o', max_tokens: 200, temperature: 0.9, messages } });\n  aiReply = response.choices[0].message.content.replace(/\\n/g,' ').trim();\n}\n\ntry {\n  await this.helpers.httpRequest({ method: 'POST', url: 'https://api.manychat.com/fb/subscriber/setCustomFieldByName', headers: { 'Authorization': MANYCHAT_KEY, 'Content-Type': 'application/json' }, body: { subscriber_id: d.subscriber_id, field_name: 'ai_reply', field_value: aiReply } });\n} catch(e) {}\n\ntry {\n  const img2 = (imageUrl && imageUrl.startsWith('http')) ? imageUrl : '';\n  await this.helpers.httpRequest({ method: 'POST', url: 'https://api.manychat.com/fb/subscriber/setCustomFieldByName', headers: { 'Authorization': MANYCHAT_KEY, 'Content-Type': 'application/json' }, body: { subscriber_id: d.subscriber_id, field_name: 'ai_image2', field_value: img2 } });\n} catch(e) {}\n\nif (stopChatNow) {\n  try {\n    await this.helpers.httpRequest({ method: 'POST', url: 'https://api.telegram.org/bot' + TELEGRAM_BOT + '/sendMessage', headers: { 'Content-Type': 'application/json' }, body: { chat_id: ADMIN_CHAT, text: '🟡 زبون بغا طريقة دفع ماكايناش! كمّل معاه نتا 👇\\n👤 ' + (d.customer_name||'') + '\\n💬 ' + (d.message||'') + '\\n📱 ' + channel + '\\n🔗 ' + (d.manychat_link||'') + '\\n\\n🔇 نقر هنا باش يسكت البوت: /stopchat ' + d.subscriber_id + '\\n🔊 باش يرجع البوت من بعد: /publicchat ' + d.subscriber_id } });\n  } catch(e) {}\n}\n\nconst finalAlertNeeded = alertOverride ? false : d.alert_needed;\n\nreturn [{ json: { subscriber_id: d.subscriber_id, customer_name: d.customer_name, channel, customer_message: d.message, intent: d.intent, new_stage: d.new_stage, total_messages: 1, alert_needed: finalAlertNeeded, alert_emoji: d.alert_emoji, alert_reason: d.alert_reason, manychat_link: d.manychat_link, image_url: imageUrl, wa_phone: d.wa_phone, interested_in: mainProduct ? mainProduct.json.product_name : '', ai_reply: aiReply } }];"
+      },
+      "id": "5843cdbc-4ffa-4171-b934-e5e1a4f8aa4c",
+      "name": "Build & Call OpenAI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO aykoshop_profiles (subscriber_id, customer_name, channel, stage, interested_in, total_messages, last_seen, notes) VALUES ('{{ $json.subscriber_id }}', '{{ $json.customer_name }}', '{{ $json.channel }}', '{{ $json.new_stage }}', '{{ $json.interested_in }}', {{ $json.total_messages }}, NOW(), '{{ $json.customer_message.replace(/'/g, \"''\").slice(0, 100) }}') ON CONFLICT (subscriber_id) DO UPDATE SET customer_name = EXCLUDED.customer_name, stage = EXCLUDED.stage, interested_in = CASE WHEN EXCLUDED.interested_in != '' THEN EXCLUDED.interested_in ELSE aykoshop_profiles.interested_in END, total_messages = aykoshop_profiles.total_messages + 1, last_seen = NOW(), notes = EXCLUDED.notes",
+        "options": {}
+      },
+      "id": "80ca60ef-d959-4607-a662-6eeddf86e1f7",
+      "name": "Save Customer Profile",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2240,
+        896
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mjgSjYbNoTvtck3V",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO aykoshop_chat_history (subscriber_id, role, message) VALUES ('{{ $(\"Build & Call OpenAI\").item.json.subscriber_id }}', 'user', '{{ $(\"Build & Call OpenAI\").item.json.customer_message.replace(/'/g, \"''\").slice(0, 500) }}'); INSERT INTO aykoshop_chat_history (subscriber_id, role, message) VALUES ('{{ $(\"Build & Call OpenAI\").item.json.subscriber_id }}', 'assistant', '{{ $(\"Build & Call OpenAI\").item.json.ai_reply.replace(/'/g, \"''\").slice(0, 500) }}');",
+        "options": {}
+      },
+      "id": "60534bc1-5bfe-433b-9298-29ab1a2eb2c2",
+      "name": "Save Chat History",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2464,
+        896
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mjgSjYbNoTvtck3V",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $(\"Build & Call OpenAI\").item.json.alert_needed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "bf3363d5-f2d8-433a-8938-19129e42a371",
+      "name": "Alert Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2688,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8506031547:AAHUlL279aE4WoiRVnhTwD0rW_lUh_pp_Go/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chat_id\": \"6990881479\", \"text\": \"{{ $(\"Build & Call OpenAI\").item.json.alert_emoji }} {{ $(\"Build & Call OpenAI\").item.json.alert_reason }}\\n👤 {{ $(\"Build & Call OpenAI\").item.json.customer_name }}\\n💬 {{ $(\"Build & Call OpenAI\").item.json.customer_message }}\\n📱 {{ $(\"Build & Call OpenAI\").item.json.channel }}\\n🔗 {{ $(\"Build & Call OpenAI\").item.json.manychat_link }}\\n🔇 /stopchat {{ $(\"Build & Call OpenAI\").item.json.subscriber_id }}\\n🔊 /publicchat {{ $(\"Build & Call OpenAI\").item.json.subscriber_id }}\" }",
+        "options": {}
+      },
+      "id": "3117f9c9-47a7-4667-9fcb-d1027bf862f1",
+      "name": "Smart Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2912,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst d = $('Build & Call OpenAI').first().json;\nconst MANYCHAT_KEY = 'Bearer 4538388:1287b970a69e4c1f0590ca7025c0b50e';\nconst channel = d.channel || 'messenger';\nif (channel === 'messenger') {\n  await this.helpers.httpRequest({ method: 'POST', url: 'https://api.manychat.com/fb/sending/sendContent', headers: { 'Authorization': MANYCHAT_KEY, 'Content-Type': 'application/json' }, body: { subscriber_id: d.subscriber_id, data: { version: 'v2', content: { messages: [{ type: 'text', text: d.ai_reply }] } } } });\n  return [{ json: { success: true, method: 'sendContent' } }];\n} else {\n  const channelType = channel === 'instagram' ? 'instagram' : 'whatsapp';\n  // text فقط - صورة كتيجي من ManyChat عبر ai_image2\n  return [{ json: { success: true, method: 'dynamic_block', dynamic_response: { version: 'v2', content: { type: channelType, messages: [{ type: 'text', text: d.ai_reply }] } } } }];\n}\n"
+      },
+      "id": "097d6fde-a9e0-48ee-9d8b-7df0bc28ce16",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "sendContent",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6db0473b-1f01-4d2a-a505-866673c2ef82",
+      "name": "Is Messenger?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3360,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.dynamic_response) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "13b09e42-2376-4383-8b46-798ea66dc2fc",
+      "name": "Dynamic Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3584,
+        992
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Meta Verify Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Meta Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Meta Token": {
+      "main": [
+        [
+          {
+            "node": "Respond Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Channel Post": {
+      "main": [
+        [
+          {
+            "node": "Check Telegram Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Telegram Command": {
+      "main": [
+        [
+          {
+            "node": "Is Sold?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Handle Chat Control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Sold?": {
+      "main": [
+        [
+          {
+            "node": "Mark Sold PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is ClearAll?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Sold PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Confirm Sold",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is ClearAll?": {
+      "main": [
+        [
+          {
+            "node": "Clear All PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Delete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear All PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Confirm Clear All",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Delete?": {
+      "main": [
+        [
+          {
+            "node": "Delete PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is SetHeaders?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Confirm Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is SetHeaders?": {
+      "main": [
+        [
+          {
+            "node": "Set Headers Direct",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Product Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Product Info": {
+      "main": [
+        [
+          {
+            "node": "Has Photo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Photo?": {
+      "main": [
+        [
+          {
+            "node": "Messenger Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Telegram File URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Telegram File URL": {
+      "main": [
+        [
+          {
+            "node": "Download Photo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Photo": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Save To PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save To PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Notify New Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Chat Control": {
+      "main": [
+        [
+          {
+            "node": "Confirm Chat Control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ManyChat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message Data": {
+      "main": [
+        [
+          {
+            "node": "Valid Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Message?": {
+      "main": [
+        [
+          {
+            "node": "Check Stopped & Route",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Silent Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Stopped & Route": {
+      "main": [
+        [
+          {
+            "node": "Is Chat Stopped?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Chat Stopped?": {
+      "main": [
+        [
+          {
+            "node": "Silent Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Screenshot or Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Screenshot or Text?": {
+      "main": [
+        [
+          {
+            "node": "Analyze Image & Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Detect Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Image & Reply": {
+      "main": [
+        [
+          {
+            "node": "Payment or Product?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment or Product?": {
+      "main": [
+        [
+          {
+            "node": "Payment Image Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Product Image Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Image Alert": {
+      "main": [
+        [
+          {
+            "node": "Image Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product Image Alert": {
+      "main": [
+        [
+          {
+            "node": "Image Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Intent": {
+      "main": [
+        [
+          {
+            "node": "Is Payment Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Payment Text?": {
+      "main": [
+        [
+          {
+            "node": "Payment Text Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read Products From PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Text Alert": {
+      "main": [
+        [
+          {
+            "node": "Wait For Confirm Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Products From PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Build & Call OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build & Call OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Save Customer Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Customer Profile": {
+      "main": [
+        [
+          {
+            "node": "Save Chat History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Chat History": {
+      "main": [
+        [
+          {
+            "node": "Alert Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Needed?": {
+      "main": [
+        [
+          {
+            "node": "Smart Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smart Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reply": {
+      "main": [
+        [
+          {
+            "node": "Is Messenger?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Messenger?": {
+      "main": [
+        [
+          {
+            "node": "Messenger Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Dynamic Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "9ebd1444-cc80-468a-acdc-b0b7b25cf345",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "9cdb3ed24c1ae4f782ae1ba854f8f487659d1de375a007de0ec4068bafef9fde"
+  },
+  "id": "4atGZG8LqbT5Frj9",
+  "tags": []
+}
