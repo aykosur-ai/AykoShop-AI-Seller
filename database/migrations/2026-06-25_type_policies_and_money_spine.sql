@@ -8,7 +8,9 @@
 --   1) aykoshop_product_type_policies  — Type-Contract (policy written ONCE per
 --      type, inherited by every product of that type). Two-plane model.
 --   2) Money SPINE — idempotent orders + append-only payments/ledger + reconcile.
---   3) Decision flight-recorder column on agent_trail (replayable decisions).
+--   3) (Flight-recorder is DEFERRED to its own later migration: aykoshop_agent_trail
+--       is owned by another role and is not ALTER-able by the app user. It will be a
+--       NEW owner-safe aykoshop_decision_trace table — primitive #2, after the spine.)
 --   4) Seeds — ONLY policies the owner actually stated (adversarially verified:
 --      zero invented facts). FF account 16d; codes; recharge. PES/social NOT seeded.
 --
@@ -112,12 +114,10 @@ CREATE OR REPLACE VIEW aykoshop_reconcile_anomalies AS
                       WHERE p.order_id = o.id AND p.status = 'verified');
 
 -- ----------------------------------------------------------------------------
--- 3) DECISION FLIGHT-RECORDER — make agent_trail replayable (additive column)
+-- 3) DECISION FLIGHT-RECORDER — deferred to its own migration (see header note).
+--    aykoshop_agent_trail is owned by another role; the app user cannot ALTER it.
+--    Next migration adds a NEW aykoshop_decision_trace table (owner-safe).
 -- ----------------------------------------------------------------------------
-ALTER TABLE aykoshop_agent_trail ADD COLUMN IF NOT EXISTS decision_envelope JSONB;
--- decision_envelope = { in_msg, grounding_facts_used, model, prompt_version,
---                       nba:{buying_prob,stage,slots}, compose_out, verify:{pass,reason} }
--- PII-redacted at write time; prune raw payloads after N days, keep the verdict.
 
 -- ----------------------------------------------------------------------------
 -- 4) SEEDS — ONLY owner-stated policy (adversarially verified: 0 invented facts)
@@ -168,5 +168,4 @@ COMMIT;
 --   DROP VIEW IF EXISTS aykoshop_reconcile_anomalies;
 --   DROP TABLE IF EXISTS aykoshop_ledger;  DROP TABLE IF EXISTS aykoshop_payments;
 --   DROP TABLE IF EXISTS aykoshop_product_type_policies;
---   ALTER TABLE aykoshop_agent_trail DROP COLUMN IF EXISTS decision_envelope;
 --   (orders columns/indexes are additive and safe to leave.)
