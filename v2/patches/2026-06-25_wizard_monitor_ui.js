@@ -35,7 +35,7 @@ async function wizTestRun(){
   var body={product_id:parseInt(gv('wt-prod')||'0',10), payment_method:gv('wt-pay'), log:true};
   var pk=gv('wt-pkg'); if(pk&&pk.trim())body.package_diamonds=pk.trim();
   var ss=document.getElementById('wt-ss'); if(ss&&ss.checked) body.screenshot_url='test://screenshot.jpg';
-  var r=await send('/api/wizard/sim','POST',body); closeModal();
+  var r=await send('/api/wizard/sim','POST',body); closeModal(); _wizScope='all';
   await sysWizard();
   var out=document.getElementById('wiz-test-out'); if(!out) return;
   if(r&&r.ok){ out.innerHTML='<div class="panel"><div class="panel-h">🧪<h2>نتيجة المحاكاة — '+esc(r.status||'')+(r.warranty_days?(' · ضمان '+r.warranty_days+' يوم'):'')+'</h2></div><div class="panel-b">'+
