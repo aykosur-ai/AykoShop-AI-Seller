@@ -2043,7 +2043,7 @@ app.post('/api/telegram/webhook', async (req,res)=>{
 app.post('/hermes/ask', async (req,res)=>{
   try{ const q=String((req.body&&req.body.question)||'').trim(); if(!q)return res.status(400).json({error:'question required'}); const a=await hermesAnswer(q,(req.body&&req.body.chat_id)||'dashboard'); res.json({answer:a}); }catch(e){ res.status(500).json({error:e.message}); }
 });
-app.get('/hermes/snapshot', async (req,res)=>{ try{ res.json(await hermesSnapshot()); }catch(e){ res.status(500).json({error:e.message}); } });
+app.get('/hermes/snapshot', asyncHandler(async (req,res)=>{ res.json(await hermesSnapshot()); }));
 
 // ===================== Intelligence + Health Center + Event-driven Hermes =====================
 let _hermesDebounce=null;
@@ -2068,19 +2068,19 @@ function purchaseProbability(c){
   else { tier='cold'; emoji='⚫'; label='Cold Lead'; }
   return { probability:p, tier, emoji, label, reason:factors.join(' · ') };
 }
-app.get('/api/intelligence/customers', async (req,res)=>{ try{
+app.get('/api/intelligence/customers', asyncHandler(async (req,res)=>{
   const r=await pool.query("SELECT subscriber_id,customer_name,channel,stage,interested_in,total_messages,last_seen,session_data,lifetime_value FROM aykoshop_profiles ORDER BY last_seen DESC NULLS LAST LIMIT 300");
   const out=r.rows.map(c=>{ const pp=purchaseProbability(c); return { subscriber_id:c.subscriber_id, customer_name:c.customer_name, channel:c.channel, stage:c.stage, interested_in:c.interested_in, total_messages:c.total_messages, last_seen:c.last_seen, lifetime_value:c.lifetime_value, probability:pp.probability, tier:pp.tier, emoji:pp.emoji, label:pp.label, reason:pp.reason }; });
   out.sort((a,b)=>b.probability-a.probability);
   res.json({ customers:out });
-}catch(e){ res.status(500).json({error:e.message}); } });
-app.get('/hermes/priority-queue', async (req,res)=>{ try{
+}));
+app.get('/hermes/priority-queue', asyncHandler(async (req,res)=>{
   const r=await pool.query("SELECT subscriber_id,customer_name,channel,stage,interested_in,total_messages,last_seen,session_data FROM aykoshop_profiles WHERE (stage IS NULL OR stage NOT IN ('paid','lost')) ORDER BY last_seen DESC NULLS LAST LIMIT 200");
   const tiers={buy_now:[],follow_today:[],warm:[],cold:[]};
   r.rows.forEach(c=>{ const pp=purchaseProbability(c); tiers[pp.tier].push({ subscriber_id:c.subscriber_id, customer_name:c.customer_name, channel:c.channel, interested_in:c.interested_in, probability:pp.probability, reason:pp.reason }); });
   Object.keys(tiers).forEach(k=>tiers[k].sort((a,b)=>b.probability-a.probability));
   res.json({ tiers, counts:{ buy_now:tiers.buy_now.length, follow_today:tiers.follow_today.length, warm:tiers.warm.length, cold:tiers.cold.length } });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 app.post('/hermes/suggest-reply', async (req,res)=>{ try{
   const sid=req.body&&req.body.subscriber_id; if(!sid) return res.status(400).json({error:'subscriber_id required'});
   const [prof,hist,prods]=await Promise.all([
@@ -2097,7 +2097,7 @@ app.post('/hermes/suggest-reply', async (req,res)=>{ try{
   const j=await r.json(); const reply=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||('تعذّر الاقتراح: '+(j.error?j.error.message:'no response'));
   res.json({ suggested_reply:reply, customer:p.customer_name||null });
 }catch(e){ res.status(500).json({error:e.message}); } });
-app.get('/api/intelligence/sales', async (req,res)=>{ try{
+app.get('/api/intelligence/sales', asyncHandler(async (req,res)=>{
   const [demand,loss,prods,atRisk,bt,ordCmp]=await Promise.all([
     pool.query("SELECT category, count(*)::int n FROM aykoshop_warehouse WHERE created_at>NOW()-INTERVAL '14 days' AND category IS NOT NULL GROUP BY category ORDER BY n DESC LIMIT 6").catch(()=>({rows:[]})),
     pool.query("SELECT reason_code, count(*)::int n FROM aykoshop_interventions GROUP BY reason_code ORDER BY n DESC LIMIT 6").catch(()=>({rows:[]})),
@@ -2107,7 +2107,7 @@ app.get('/api/intelligence/sales', async (req,res)=>{ try{
     pool.query("SELECT count(*) FILTER (WHERE created_at::date=CURRENT_DATE)::int today, count(*) FILTER (WHERE created_at::date=CURRENT_DATE-1)::int yesterday FROM aykoshop_orders").catch(()=>({rows:[{today:0,yesterday:0}]}))
   ]);
   res.json({ top_demand:demand.rows, loss_reasons:loss.rows, products:prods.rows, at_risk_count:atRisk.rows[0].n, best_hours:bt.rows.map(x=>x.h), orders_today:ordCmp.rows[0].today, orders_yesterday:ordCmp.rows[0].yesterday });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 // Unified Health Center — live probes with latency + weighted health score
 // ===================== Circuit Breaker (provider health -> active fallback) =====================
 const CB_THRESHOLD=3, CB_COOLDOWN_MS=60000;
@@ -6408,7 +6408,7 @@ function _hdExtract(messages){
 }
 function _hdMedian(a){ if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y); const m=Math.floor(s.length/2); return s.length%2?s[m]:Math.round((s[m-1]+s[m])/2); }
 function _hdParsePrice(p){ const m=String(p||'').match(/\d{2,6}/); return m?parseInt(m[0],10):null; }
-app.get('/api/hermes/demand', async (req,res)=>{ try{
+app.get('/api/hermes/demand', asyncHandler(async (req,res)=>{
   if(String(req.query.selftest||'')==='1'){
     const fx=_hdExtract([
       {subscriber:'a',text:'سلام فري فاير'},
@@ -6456,7 +6456,7 @@ app.get('/api/hermes/demand', async (req,res)=>{ try{
     gaps:gaps.length, total_lost_revenue:rows.reduce((s,r)=>s+r.est_lost_revenue,0),
     banner:'📦 الطلب vs المخزون — مبني على '+realCustomers+' زبون حقيقي'+(realCustomers<10?' (عيّنة صغيرة — اتجاه ماشي قرار نهائي)':''),
     rows });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 
 // ===== LEAD SCORING V1 — live deterministic stage per REAL customer (cold→warm→hot→buyer). 100% coverage, always fresh, NO cron, NO table write. From existing signals: funnel (agent_trail) + orders + budget + recency. =====
 async function _leadStages(days){
@@ -6522,7 +6522,7 @@ async function _hermesAdvisor(days){
     operations:{ frozen:Number(ops.rows[0].frozen), pending_interventions:Number(ops.rows[0].pending), ai_calls_24h:Number(ops.rows[0].ai24), open_circuits:ops.rows[0].circ },
     gaps:{ lead_score_real_coverage:Number(leadcov.rows[0].real)+'/'+realCust, clarify_turns:Number(clar.rows[0].n), seller_to_human:reachedHuman } };
 }
-app.get('/api/hermes/advisor', async (req,res)=>{ try{
+app.get('/api/hermes/advisor', asyncHandler(async (req,res)=>{
   const a=await _hermesAdvisor(req.query.days);
   let dem=null; try{ dem=await (await fetch('http://localhost:4000/api/hermes/demand?days='+(a.window_days))).json(); }catch(_e){}
   a.demand={ gaps:(dem&&dem.gaps)||0, total_lost_revenue:(dem&&dem.total_lost_revenue)||0, top:(dem&&(dem.rows||[]).filter(r=>r.gap!=='OK').slice(0,3))||[] };
@@ -6530,7 +6530,7 @@ app.get('/api/hermes/advisor', async (req,res)=>{ try{
   try{ a.catalog = await _catalogIntel((dem&&dem.rows)||[], a.real_customers); }catch(_e){ a.catalog=null; }
   a.banner='🧠 مستشار المشروع — '+a.real_customers+' زبون حقيقي · ثقة '+a.confidence+(a.real_customers<30?' (عيّنة صغيرة — اتجاه ماشي قرار نهائي)':'');
   res.json({ ok:true, advisor:a });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 
 // ===== P5 CATALOG INTELLIGENCE V2 — what to ADD (demand gaps) · what's NOT selling · what to REVIEW/remove (dead = 0 demand + 0 sales). Honest: 'remove' is LOW-confidence on tiny traffic — never auto-act. =====
 async function _catalogIntel(demRows, realCust){
@@ -6552,11 +6552,11 @@ async function _catalogIntel(demRows, realCust){
     dead_candidates:dead, demanded_most,
     remove_confidence:(realCust>=30?'ok':'low'), remove_note:(realCust<30?'⚠️ ماتحيّدش حتى منتج دابا — '+realCust+' زبناء فقط (إشارة ضعيفة). الـdead = ماطلبو حتى زبون + ماتباعو، ولكن الترافيك قليل.':'') };
 }
-app.get('/api/hermes/catalog', async (req,res)=>{ try{
+app.get('/api/hermes/catalog', asyncHandler(async (req,res)=>{
   let dem={rows:[],real_customers:0}; try{ dem=await (await fetch('http://localhost:4000/api/hermes/demand?days='+(Math.min(parseInt(req.query.days)||90,180)))).json(); }catch(_e){}
   const ci=await _catalogIntel((dem&&dem.rows)||[], (dem&&dem.real_customers)||0);
   res.json({ ok:true, banner:'📚 ذكاء الكاطالوغ — زيد '+ci.to_add.length+' · مايتباعش '+ci.not_selling.length+' · مرشّح للحذف '+ci.dead_candidates.length+(ci.remove_note?(' '+ci.remove_note):''), ...ci });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 // ===== PROACTIVE HERMES — SIGNAL ENGINE. Scans real data, detects high-ROI/risk signals, dedups (cooldown), sends «💡 اقتراح»/«⚠️ انتباه» (what·why·suggest). ff_hermes_signals = off|shadow|on. shadow=detect+store, no send. on=send ≤cap/day, highest-ROI first. =====
 async function _sigTgSend(text){ try{ const t=process.env.TEST_TG_TOKEN, c=process.env.TEST_TG_CHAT; if(!t||!c) return false; await fetch('https://api.telegram.org/bot'+t+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:c,text:text}),signal:AbortSignal.timeout(8000)}); return true; }catch(_e){ return false; } }
 async function _signalScan(){
@@ -6610,11 +6610,11 @@ async function _signalScan(){
   }
   return { mode, candidates:cand.length, inserted:inserted.length, sent };
 }
-app.post('/api/hermes/signals/scan', async (req,res)=>{ try{ res.json({ ok:true, ...(await _signalScan()) }); }catch(e){ res.status(500).json({error:e.message}); } });
-app.get('/api/hermes/signals', async (req,res)=>{ try{
+app.post('/api/hermes/signals/scan', asyncHandler(async (req,res)=>{ res.json({ ok:true, ...(await _signalScan()) }); }));
+app.get('/api/hermes/signals', asyncHandler(async (req,res)=>{
   let rows=[]; try{ rows=(await pool.query("SELECT id,signal_type,severity,title,what,why,suggest,status,created_at,sent_at FROM aykoshop_signals ORDER BY created_at DESC LIMIT 30")).rows; }catch(_e){}
   res.json({ ok:true, signals:rows, total:rows.length });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 // ===== P3 OPPORTUNITY → SALE TRACKING — closed loop: Hermes recommends → did we add stock? → did demand repeat? → did it CONVERT to a confirmed sale? Measures recommendation HEALTH, not just discovery. =====
 async function _oppSync(demRows){
   await pool.query("CREATE TABLE IF NOT EXISTS aykoshop_opportunities (id SERIAL PRIMARY KEY, opp_key TEXT UNIQUE, game TEXT, type TEXT, first_detected TIMESTAMPTZ DEFAULT now(), last_seen TIMESTAMPTZ DEFAULT now(), requested_count INT, hot_count INT, budget_min INT, budget_max INT, est_lost_revenue INT, status TEXT DEFAULT 'open', inventory_added_at TIMESTAMPTZ, converted_at TIMESTAMPTZ, converted_order_id INT)").catch(()=>{});
@@ -6633,11 +6633,11 @@ async function _oppSync(demRows){
   const addressed=(byStatus.inventory_added||0)+(byStatus.converted||0);
   return { tracked:all.rows.length, by_status:byStatus, addressed, recommendation_health_pct:(addressed>0?Math.round(100*(byStatus.converted||0)/addressed):null), opportunities:all.rows };
 }
-app.get('/api/hermes/opportunities', async (req,res)=>{ try{
+app.get('/api/hermes/opportunities', asyncHandler(async (req,res)=>{
   let dem={rows:[]}; try{ dem=await (await fetch('http://localhost:4000/api/hermes/demand?days='+(Math.min(parseInt(req.query.days)||90,180)))).json(); }catch(_e){}
   const opp=await _oppSync((dem&&dem.rows)||[]);
   res.json({ ok:true, banner:'🎯 تتبّع الفرص → البيع: '+opp.tracked+' فرصة متتبّعة · صحة التوصيات '+(opp.recommendation_health_pct!=null?opp.recommendation_health_pct+'%':'— (مازال ماكاين فرصة عولجت)'), ...opp });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 
 // GET /api/reports/daily — full daily report data (used by cron + Dashboard)
 app.get('/api/reports/daily', async (req, res) => {

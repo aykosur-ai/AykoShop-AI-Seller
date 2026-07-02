@@ -142,9 +142,15 @@ async function computeAll(pool){
 }
 
 function registerRoutes(app, pool){
+  // Phase 1 Module 5 (2026-07-02): local asyncHandler — pure de-duplication of the `catch(e){res.status(500).json({error:e.message})}`
+  // pattern already used by every route below. Byte-identical output to the inline try/catch it replaces.
+  function asyncHandler(fn) {
+    return function(req, res, next) {
+      Promise.resolve(fn(req, res)).catch(function(e) { res.status(500).json({ error: e.message }); });
+    };
+  }
   const ORDER="ORDER BY CASE priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END, score DESC";
-  app.get('/hermes/summary', async (req,res)=>{
-    try{
+  app.get('/hermes/summary', asyncHandler(async (req,res)=>{
       const [counts,run,top]=await Promise.all([
         pool.query("SELECT COUNT(*) FILTER (WHERE type='hot_lead') hot_leads, COUNT(*) FILTER (WHERE type='lost_sale') lost_sales, COUNT(*) FILTER (WHERE type='follow_up') follow_ups, COUNT(*) FILTER (WHERE type='payment_confirm') payments FROM hermes_recommendations WHERE status='active'"),
         pool.query('SELECT finished_at,ok FROM hermes_runs ORDER BY id DESC LIMIT 1'),
@@ -152,31 +158,26 @@ function registerRoutes(app, pool){
       ]);
       const al=await pool.query("SELECT COUNT(*) FILTER (WHERE category='customer_risk') risks, COUNT(*) FILTER (WHERE category='workflow_health') workflow_issues FROM hermes_alerts WHERE status='active'");
       res.json({ hot_leads:+counts.rows[0].hot_leads||0, lost_sales:+counts.rows[0].lost_sales||0, follow_ups:+counts.rows[0].follow_ups||0, payments:+counts.rows[0].payments||0, risks:+al.rows[0].risks||0, workflow_issues:+al.rows[0].workflow_issues||0, last_run:run.rows[0]?run.rows[0].finished_at:null, last_run_ok:run.rows[0]?run.rows[0].ok:null, top_recommendations:top.rows });
-    }catch(e){res.status(500).json({error:e.message});}
-  });
-  app.get('/hermes/cockpit', async (req,res)=>{
-    try{
+  }));
+  app.get('/hermes/cockpit', asyncHandler(async (req,res)=>{
       const [recs,al]=await Promise.all([
         pool.query("SELECT id,type,icon,subscriber_id,customer_name,channel,title,reason,suggested_action,estimated_value,probability,priority,target FROM hermes_recommendations WHERE status='active' "+ORDER+" LIMIT 12"),
         pool.query("SELECT id,category,severity,icon,title,reason,count,target FROM hermes_alerts WHERE status='active' ORDER BY CASE severity WHEN 'critical' THEN 1 WHEN 'warning' THEN 2 ELSE 3 END, created_at DESC LIMIT 8")
       ]);
       res.json({recommendations:recs.rows, alerts:al.rows});
-    }catch(e){res.status(500).json({error:e.message});}
-  });
-  app.get('/hermes/recommendations', async (req,res)=>{
-    try{ const {type,limit=50}=req.query;
+  }));
+  app.get('/hermes/recommendations', asyncHandler(async (req,res)=>{
+      const {type,limit=50}=req.query;
       const where=type?"status='active' AND type=$1":"status='active'"; const params=type?[type,+limit]:[+limit];
       const r=await pool.query("SELECT id,type,icon,subscriber_id,customer_name,channel,title,reason,suggested_action,estimated_value,probability,priority,target FROM hermes_recommendations WHERE "+where+" "+ORDER+" LIMIT $"+(type?2:1),params);
       res.json({recommendations:r.rows});
-    }catch(e){res.status(500).json({error:e.message});}
-  });
-  app.get('/hermes/alerts', async (req,res)=>{ try{ const r=await pool.query("SELECT id,category,severity,icon,title,reason,count,target FROM hermes_alerts WHERE status='active' ORDER BY created_at DESC"); res.json({alerts:r.rows}); }catch(e){res.status(500).json({error:e.message});} });
-  app.get('/hermes/context/customer/:id', async (req,res)=>{ try{ const r=await pool.query("SELECT id,type,icon,title,reason,suggested_action,estimated_value,probability,priority FROM hermes_recommendations WHERE subscriber_id=$1 AND status='active' "+ORDER,[req.params.id]); res.json({subscriber_id:req.params.id, recommendations:r.rows}); }catch(e){res.status(500).json({error:e.message});} });
-  app.post('/hermes/recommendations/:id/dismiss', async (req,res)=>{ try{ await pool.query("UPDATE hermes_recommendations SET status='dismissed', updated_at=NOW() WHERE id=$1",[req.params.id]); res.json({success:true}); }catch(e){res.status(500).json({error:e.message});} });
-  app.post('/hermes/recommendations/:id/actioned', async (req,res)=>{ try{ await pool.query("UPDATE hermes_recommendations SET status='actioned', updated_at=NOW() WHERE id=$1",[req.params.id]); res.json({success:true}); }catch(e){res.status(500).json({error:e.message});} });
-  app.get('/hermes/health', async (req,res)=>{ try{ const r=await pool.query('SELECT started_at,finished_at,recommendations,alerts,ok,error FROM hermes_runs ORDER BY id DESC LIMIT 1'); res.json({last_run:r.rows[0]||null}); }catch(e){res.status(500).json({error:e.message});} });
-  app.get('/hermes/recovery', async (req,res)=>{
-    try{
+  }));
+  app.get('/hermes/alerts', asyncHandler(async (req,res)=>{ const r=await pool.query("SELECT id,category,severity,icon,title,reason,count,target FROM hermes_alerts WHERE status='active' ORDER BY created_at DESC"); res.json({alerts:r.rows}); }));
+  app.get('/hermes/context/customer/:id', asyncHandler(async (req,res)=>{ const r=await pool.query("SELECT id,type,icon,title,reason,suggested_action,estimated_value,probability,priority FROM hermes_recommendations WHERE subscriber_id=$1 AND status='active' "+ORDER,[req.params.id]); res.json({subscriber_id:req.params.id, recommendations:r.rows}); }));
+  app.post('/hermes/recommendations/:id/dismiss', asyncHandler(async (req,res)=>{ await pool.query("UPDATE hermes_recommendations SET status='dismissed', updated_at=NOW() WHERE id=$1",[req.params.id]); res.json({success:true}); }));
+  app.post('/hermes/recommendations/:id/actioned', asyncHandler(async (req,res)=>{ await pool.query("UPDATE hermes_recommendations SET status='actioned', updated_at=NOW() WHERE id=$1",[req.params.id]); res.json({success:true}); }));
+  app.get('/hermes/health', asyncHandler(async (req,res)=>{ const r=await pool.query('SELECT started_at,finished_at,recommendations,alerts,ok,error FROM hermes_runs ORDER BY id DESC LIMIT 1'); res.json({last_run:r.rows[0]||null}); }));
+  app.get('/hermes/recovery', asyncHandler(async (req,res)=>{
       const num = s => parseInt(String(s||'').replace(/[^0-9]/g,''))||0;
       const [paying,clv,unconf,renew,rep,wbk,chn]=await Promise.all([
         pool.query("SELECT COUNT(DISTINCT subscriber_id)::int n FROM aykoshop_orders WHERE paid_at IS NOT NULL"),
@@ -195,8 +196,7 @@ function registerRoutes(app, pool){
         queues:{ renewals, repeat:repeats, winback, churn },
         forecast:{ renewals_due_value:renewals.reduce((a,r)=>a+num(r.price),0), repeat_candidates:repeats.length }
       });
-    }catch(e){res.status(500).json({error:e.message});}
-  });
+  }));
   console.log('[hermes] /hermes/* routes registered');
 }
 module.exports = { computeAll, registerRoutes };

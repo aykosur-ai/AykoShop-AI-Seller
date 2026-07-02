@@ -54,11 +54,18 @@ Updated 2026-07-02 (Phase 1 Module 4 Increment 1 — Customers read/simple-write
 ```
 095c7b8455c85abfcbb3806820ae135d3315a9cd99661ea7dbee5e8767522605  backend/server.js
 ```
+
+Updated 2026-07-02 (Phase 1 Module 5 Increment 1 — Hermes asyncHandler, backend only, both server.js and hermes.js):
+```
+358aba05ac2e6d015d3c38e8aa104b38cfe716efa0d0c9cbf84c4a05df8caaeb  backend/server.js
+016fe5d8735a5bcb9805965e17fed0b17b78276ddccd4705a3a3eeb1f8a1bd67  backend/hermes.js
+```
 Frontend unchanged by this module (still matches the inbox-fix hashes above).
 
 ## Line counts
 
-- `backend/server.js` — 7,941 lines (was 7,944 before Phase 1; net change from asyncHandler de-duplication across Modules 1, 2, 3, 4 — each conversion removes a `try{`/`}catch(e){...}` wrapper pair)
+- `backend/server.js` — net change from asyncHandler de-duplication across Modules 1, 2, 3, 4, 5 — each conversion removes a `try{`/`}catch(e){...}` wrapper pair (was 7,944 lines before Phase 1)
+- `backend/hermes.js` — +9 lines (local `asyncHandler` helper, Module 5)
 - `frontend/core.js` — 505 lines
 - `frontend/workspaces.js` — 2,777 lines
 
