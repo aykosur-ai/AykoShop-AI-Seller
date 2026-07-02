@@ -461,11 +461,9 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // ==================== PRODUCTS ====================
-app.get('/api/products', async (req, res) => {
-  try { const r = await pool.query("SELECT * FROM aykoshop_products ORDER BY created_at DESC"); res.json(r.rows); } catch(e) { res.status(500).json({error: e.message}); }
-});
-app.post('/api/products/add', async (req, res) => {
-  try {
+// Phase 1 Module 3 (2026-07-02): catalog routes use asyncHandler
+app.get('/api/products', asyncHandler(async (req, res) => { const r = await pool.query("SELECT * FROM aykoshop_products ORDER BY created_at DESC"); res.json(r.rows); }));
+app.post('/api/products/add', asyncHandler(async (req, res) => {
     _composeListing(req.body);
     const { product_name, price, description, image_url, whatsapp_url, instagram_url, category, status, min_price, account_link_type, key_features, delivery_time, product_type, game, recharge_type, recharge_amount, vip_recharge, product_code, evo_count, account_rank, account_platform, recharge_packages, code_type, price_usd, price_eur, key_benefits, max_discount, related_products, proof_images, stock, target_customer, selling_angle, objections, do_not_recommend, social_proof, guarantee_note, delivery_promise, risk_notes, facebook_url, product_url, cost_price, service_type, buyer_requirements, attributes } = req.body;
     const _pv = price? (parseInt(String(price).replace(/[^0-9]/g,''))||null) : null;
@@ -475,8 +473,7 @@ app.post('/api/products/add', async (req, res) => {
     const r = await pool.query("INSERT INTO aykoshop_products (product_name,price,price_value,description,image_url,whatsapp_url,instagram_url,category,status,min_price,account_link_type,key_features,delivery_time,product_type,game,recharge_type,recharge_amount,vip_recharge,product_code,evo_count,account_rank,account_platform,recharge_packages,code_type,price_usd,price_eur,keywords,key_benefits,max_discount,related_products,proof_images,stock) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23::jsonb,$24,$25,$26,$27,$28,$29,$30,$31::jsonb,$32) RETURNING *",
       [product_name, price, _pv, description||'', image_url||'', whatsapp_url||'', instagram_url||'', category||'', status||'available', (min_price||null), (account_link_type||null), (key_features||null), (delivery_time||null), (product_type||null), (game||null), (recharge_type||null), (recharge_amount||null), _vip, (product_code||null), (evo_count||null), (account_rank||null), (account_platform||null), (recharge_packages?JSON.stringify(recharge_packages):null), (code_type||null), (price_usd||null), (price_eur||null), _kw, (key_benefits||null), ((max_discount===''||max_discount===undefined||max_discount===null)?null:(parseFloat(String(max_discount).replace(/[^0-9.]/g,''))||null)), (related_products||null), (proof_images?JSON.stringify(proof_images):null), ((stock===''||stock===undefined||stock===null)?null:(parseInt(String(stock).replace(/[^0-9]/g,''))||null))]);
     if(r&&r.rows&&r.rows[0]&&r.rows[0].id){ _embedProduct(r.rows[0].id); await pool.query("UPDATE aykoshop_products SET target_customer=COALESCE($2,target_customer),selling_angle=COALESCE($3,selling_angle),objections=COALESCE($4,objections),do_not_recommend=COALESCE($5,do_not_recommend),social_proof=COALESCE($6,social_proof),guarantee_note=COALESCE($7,guarantee_note),delivery_promise=COALESCE($8,delivery_promise),risk_notes=COALESCE($9,risk_notes),facebook_url=COALESCE($10,facebook_url),product_url=COALESCE($11,product_url),cost_price=COALESCE($12,cost_price),service_type=COALESCE($13,service_type),buyer_requirements=COALESCE($14::jsonb,buyer_requirements),attributes=COALESCE($15::jsonb,attributes) WHERE id=$1",[r.rows[0].id,(target_customer||null),(selling_angle||null),(objections||null),(do_not_recommend||null),(social_proof||null),(guarantee_note||null),(delivery_promise||null),(risk_notes||null),(facebook_url||null),(product_url||null),((cost_price===''||cost_price===undefined||cost_price===null)?null:(parseFloat(String(cost_price).replace(/[^0-9.]/g,''))||null)),(service_type||null),(buyer_requirements?JSON.stringify(buyer_requirements):null),(attributes?JSON.stringify(attributes):null)]).catch(function(){}); } res.json(r.rows[0]);
-  } catch(e) { res.status(500).json({error: e.message}); }
-});
+}));
 // ===== PRODUCT VALIDATION LAYER — incomplete products can't go ACTIVE (Seller/Router/CatalogSearch need complete data) =====
 // ===== AUTO KEYWORDS — make any product searchable/sellable even if keywords left blank (bilingual AR<->EN aliases) =====
 function _composeListing(p){
@@ -549,7 +546,7 @@ function _genKeywords(p){
     return Array.from(set).join(' ').slice(0,400);
   }catch(e){ return String((p&&p.product_name)||''); }
 }
-app.post('/api/products/gen-keywords', (req,res)=>{ try{ res.json({ keywords:_genKeywords(req.body||{}) }); }catch(e){ res.status(500).json({error:e.message}); } });
+app.post('/api/products/gen-keywords', asyncHandler((req,res)=>{ res.json({ keywords:_genKeywords(req.body||{}) }); }));
 // ===== P3: AI Product DNA assistant (draft-only; prose-only; PRICE-FIREWALLED — never emits a price) =====
 // ── Hermes DNA Engine — builds Product DNA from rules + DB (zero LLM). Called by draft-dna endpoint.
 async function _hermesDNA(b){
@@ -694,9 +691,8 @@ function _validateProduct(p){
   score-=missD.length*18; if(score<0)score=0; if(score>100)score=100;
   return { ok:missD.length===0, score:Math.round(score), missing:missD, soft:soft };
 }
-app.get('/api/products/validation-audit', async (req,res)=>{ try{ const r=await pool.query('SELECT * FROM aykoshop_products ORDER BY id'); const items=r.rows.map(function(p){ const v=_validateProduct(p); return {id:p.id,name:p.product_name,status:p.status,type:p.product_type,score:v.score,ok:v.ok,missing:v.missing,soft:v.soft}; }); const complete=items.filter(function(x){return x.ok;}).length; const activeBad=items.filter(function(x){return !x.ok && x.status==='available';}); res.json({ total:items.length, complete:complete, incomplete:items.length-complete, active_incomplete:activeBad.length, avg_score:Math.round(items.reduce(function(a,b){return a+b.score;},0)/(items.length||1)), products:items }); }catch(e){ res.status(500).json({error:e.message}); } });
-app.put('/api/products/:id', async (req, res) => {
-  try {
+app.get('/api/products/validation-audit', asyncHandler(async (req,res)=>{ const r=await pool.query('SELECT * FROM aykoshop_products ORDER BY id'); const items=r.rows.map(function(p){ const v=_validateProduct(p); return {id:p.id,name:p.product_name,status:p.status,type:p.product_type,score:v.score,ok:v.ok,missing:v.missing,soft:v.soft}; }); const complete=items.filter(function(x){return x.ok;}).length; const activeBad=items.filter(function(x){return !x.ok && x.status==='available';}); res.json({ total:items.length, complete:complete, incomplete:items.length-complete, active_incomplete:activeBad.length, avg_score:Math.round(items.reduce(function(a,b){return a+b.score;},0)/(items.length||1)), products:items }); }));
+app.put('/api/products/:id', asyncHandler(async (req, res) => {
     const { product_name, price, description, image_url, whatsapp_url, instagram_url, category, status, min_price, account_link_type, key_features, delivery_time, product_type, game, recharge_type, recharge_amount, vip_recharge, product_code, evo_count, account_rank, account_platform, recharge_packages, code_type, price_usd, price_eur, key_benefits, max_discount, related_products, proof_images, stock, target_customer, selling_angle, objections, do_not_recommend, social_proof, guarantee_note, delivery_promise, risk_notes, facebook_url, product_url, cost_price, service_type, buyer_requirements, attributes } = req.body;
     const _pv = price? (parseInt(String(price).replace(/[^0-9]/g,''))||null) : null;
     const _vip = (typeof vip_recharge==='undefined'||vip_recharge===null||vip_recharge==='') ? (recharge_amount?((parseInt(String(recharge_amount).replace(/[^0-9]/g,''))||0)>=5000):null) : (vip_recharge===true||vip_recharge==='true'||vip_recharge==='Yes'||vip_recharge==='yes');
@@ -705,18 +701,12 @@ app.put('/api/products/:id', async (req, res) => {
     const r = await pool.query("UPDATE aykoshop_products SET product_name=COALESCE($1,product_name), price=COALESCE($2,price), price_value=COALESCE($3,price_value), description=COALESCE($4,description), image_url=COALESCE($5,image_url), whatsapp_url=COALESCE($6,whatsapp_url), instagram_url=COALESCE($7,instagram_url), category=COALESCE($8,category), status=COALESCE($9,status), min_price=COALESCE($10,min_price), account_link_type=COALESCE($11,account_link_type), key_features=COALESCE($12,key_features), delivery_time=COALESCE($13,delivery_time), product_type=COALESCE($15,product_type), game=COALESCE($16,game), recharge_type=COALESCE($17,recharge_type), recharge_amount=COALESCE($18,recharge_amount), vip_recharge=COALESCE($19,vip_recharge), product_code=COALESCE($20,product_code), evo_count=COALESCE($21,evo_count), account_rank=COALESCE($22,account_rank), account_platform=COALESCE($23,account_platform), recharge_packages=COALESCE($24::jsonb,recharge_packages), code_type=COALESCE($25,code_type), price_usd=COALESCE($26,price_usd), price_eur=COALESCE($27,price_eur), keywords=COALESCE($28,keywords), key_benefits=COALESCE($29,key_benefits), max_discount=COALESCE($30,max_discount), related_products=COALESCE($31,related_products), proof_images=COALESCE($32::jsonb,proof_images), stock=COALESCE($33,stock), updated_at=NOW() WHERE id=$14 RETURNING *",
       [product_name, price, _pv, description, image_url, whatsapp_url, instagram_url, category, status, (min_price||null), (account_link_type||null), (key_features||null), (delivery_time||null), req.params.id, (product_type||null), (game||null), (recharge_type||null), (recharge_amount||null), _vip, (product_code||null), (evo_count||null), (account_rank||null), (account_platform||null), (recharge_packages?JSON.stringify(recharge_packages):null), (code_type||null), (price_usd||null), (price_eur||null), _kw, (key_benefits||null), ((max_discount===''||max_discount===undefined||max_discount===null)?null:(parseFloat(String(max_discount).replace(/[^0-9.]/g,''))||null)), (related_products||null), (proof_images?JSON.stringify(proof_images):null), ((stock===''||stock===undefined||stock===null)?null:(parseInt(String(stock).replace(/[^0-9]/g,''))||null))]);
     if(r&&r.rows&&r.rows[0]&&r.rows[0].id){ _embedProduct(r.rows[0].id); await pool.query("UPDATE aykoshop_products SET target_customer=COALESCE($2,target_customer),selling_angle=COALESCE($3,selling_angle),objections=COALESCE($4,objections),do_not_recommend=COALESCE($5,do_not_recommend),social_proof=COALESCE($6,social_proof),guarantee_note=COALESCE($7,guarantee_note),delivery_promise=COALESCE($8,delivery_promise),risk_notes=COALESCE($9,risk_notes),facebook_url=COALESCE($10,facebook_url),product_url=COALESCE($11,product_url),cost_price=COALESCE($12,cost_price),service_type=COALESCE($13,service_type),buyer_requirements=COALESCE($14::jsonb,buyer_requirements),attributes=COALESCE($15::jsonb,attributes) WHERE id=$1",[r.rows[0].id,(target_customer||null),(selling_angle||null),(objections||null),(do_not_recommend||null),(social_proof||null),(guarantee_note||null),(delivery_promise||null),(risk_notes||null),(facebook_url||null),(product_url||null),((cost_price===''||cost_price===undefined||cost_price===null)?null:(parseFloat(String(cost_price).replace(/[^0-9.]/g,''))||null)),(service_type||null),(buyer_requirements?JSON.stringify(buyer_requirements):null),(attributes?JSON.stringify(attributes):null)]).catch(function(){}); } res.json(r.rows[0]);
-  } catch(e) { res.status(500).json({error: e.message}); }
-});
-app.delete('/api/products/:id', async (req, res) => {
-  try { await pool.query("DELETE FROM aykoshop_products WHERE id=$1", [req.params.id]); res.json({success:true}); } catch(e) { res.status(500).json({error: e.message}); }
-});
-app.patch('/api/products/:id/status', async (req, res) => {
-  try { await pool.query("UPDATE aykoshop_products SET status=$1,updated_at=NOW() WHERE id=$2", [req.body.status, req.params.id]); res.json({success:true}); } catch(e) { res.status(500).json({error: e.message}); }
-});
+}));
+app.delete('/api/products/:id', asyncHandler(async (req, res) => { await pool.query("DELETE FROM aykoshop_products WHERE id=$1", [req.params.id]); res.json({success:true}); }));
+app.patch('/api/products/:id/status', asyncHandler(async (req, res) => { await pool.query("UPDATE aykoshop_products SET status=$1,updated_at=NOW() WHERE id=$2", [req.body.status, req.params.id]); res.json({success:true}); }));
 
 // ==================== VECTOR EMBEDDING (pgvector) ====================
-app.post('/api/products/embed', async (req, res) => {
-  try {
+app.post('/api/products/embed', asyncHandler(async (req, res) => {
     const { id, embedding, embed_text } = req.body;
     if (!id || !embedding) return res.status(400).json({ error: 'id and embedding required' });
     await pool.query(
@@ -724,11 +714,9 @@ app.post('/api/products/embed', async (req, res) => {
       [embedding, embed_text || '', id]
     );
     res.json({ success: true, id });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
-app.post('/api/products/vector-search', async (req, res) => {
-  try {
+app.post('/api/products/vector-search', asyncHandler(async (req, res) => {
     const { embedding, limit = 5 } = req.body;
     if (!embedding) return res.status(400).json({ error: 'embedding required' });
     const r = await pool.query(`
@@ -741,11 +729,9 @@ app.post('/api/products/vector-search', async (req, res) => {
       LIMIT $2
     `, [embedding, Math.min(parseInt(limit) || 5, 10)]);
     res.json({ products: r.rows, count: r.rows.length });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
-app.get('/api/products/embed-status', async (req, res) => {
-  try {
+app.get('/api/products/embed-status', asyncHandler(async (req, res) => {
     const r = await pool.query(`
       SELECT
         COUNT(*) as total,
@@ -755,8 +741,7 @@ app.get('/api/products/embed-status', async (req, res) => {
       FROM aykoshop_products WHERE status='available'
     `);
     res.json(r.rows[0]);
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 // ==================== TYPE POLICIES API ====================
 // GET — returns all rows from aykoshop_product_type_policies

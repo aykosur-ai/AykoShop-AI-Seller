@@ -36,11 +36,16 @@ Updated 2026-07-02 (Phase 1 Module 2 Increment 1 — Channels read-only ManyChat
 ```
 1eb2224f41feba6e913efa47f7b5df8ddcaa80e791b78c47ab337b76e08ed774  backend/server.js
 ```
+
+Updated 2026-07-02 (Phase 1 Module 3 Increment 1 — Catalog CRUD asyncHandler, backend only):
+```
+02e19c609e0c43787cfa76cd76af64dfc6c27719a4b107a651e49e8fda1a5137  backend/server.js
+```
 Frontend files unchanged by Phase 1 (still match the hashes above).
 
 ## Line counts
 
-- `backend/server.js` — 7,970 lines (7,944 before Phase 1; +13 from Module 1's asyncHandler; +13 from Module 2 Inc.1's mcGetInfo/mcPageInfo)
+- `backend/server.js` — 7,968 lines (7,944 before Phase 1; +13 Module 1 asyncHandler; +13 Module 2 Inc.1 mcGetInfo/mcPageInfo; -2 Module 3 Inc.1 asyncHandler on 10 catalog routes)
 - `frontend/core.js` — 505 lines
 - `frontend/workspaces.js` — 2,777 lines
 
