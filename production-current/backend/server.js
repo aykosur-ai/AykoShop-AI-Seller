@@ -789,8 +789,7 @@ app.put('/api/type-policies/:key', async (req,res)=>{
   }catch(e){ res.status(500).json({ok:false,error:e.message}); }
 });
 // ==================== CUSTOMERS ====================
-app.get('/api/customers', async (req, res) => {
-  try {
+app.get('/api/customers', asyncHandler(async (req, res) => {
     const r = await pool.query(`
       SELECT
         p.*,
@@ -822,8 +821,7 @@ app.get('/api/customers', async (req, res) => {
       ORDER BY p.last_seen DESC LIMIT 500
     `);
     res.json(r.rows);
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 // Take Over — stop AI for a specific subscriber (adds to stopped_chats)
 app.post('/api/customers/:id/takeover', async (req, res) => {
@@ -871,12 +869,10 @@ app.delete('/api/customers/:id/takeover', async (req, res) => {
 });
 
 // Check if AI is stopped for a subscriber
-app.get('/api/customers/:id/ai-status', async (req, res) => {
-  try {
+app.get('/api/customers/:id/ai-status', asyncHandler(async (req, res) => {
     const r = await pool.query("SELECT stopped_at FROM aykoshop_stopped_chats WHERE subscriber_id=$1", [req.params.id]);
     res.json({ ai_stopped: r.rows.length > 0, stopped_since: r.rows[0]?.stopped_at || null });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 // [DIAG read-only] ManyChat subscriber getInfo — channel + last_interaction (audit WhatsApp vs Messenger send window). Remove after diagnosis.
 app.get('/api/_diag/mcinfo/:id', async (req,res)=>{ try{ const r=await mcGetInfo(req.params.id, 8000); const j=await r.json().catch(()=>({})); res.json(j); }catch(e){ res.status(500).json({error:e.message}); } });
@@ -1094,11 +1090,8 @@ app.post('/api/rescue-queue/auto-scan', async (req, res) => {
     res.json({ scanned: candidates.rows.length, added, skipped });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
-app.get('/api/customers/:id/history', async (req, res) => {
-  try { const r = await pool.query("SELECT * FROM aykoshop_chat_history WHERE subscriber_id=$1 ORDER BY created_at ASC LIMIT 200", [req.params.id]); res.json(r.rows); } catch(e) { res.status(500).json({error: e.message}); }
-});
-app.get('/api/customers/:id/timeline', async (req, res) => {
-  try {
+app.get('/api/customers/:id/history', asyncHandler(async (req, res) => { const r = await pool.query("SELECT * FROM aykoshop_chat_history WHERE subscriber_id=$1 ORDER BY created_at ASC LIMIT 200", [req.params.id]); res.json(r.rows); }));
+app.get('/api/customers/:id/timeline', asyncHandler(async (req, res) => {
     const sid = req.params.id;
     const [history, orders, events] = await Promise.all([
       pool.query("SELECT role,message,created_at FROM aykoshop_chat_history WHERE subscriber_id=$1 ORDER BY created_at DESC LIMIT 100", [sid]),
@@ -1111,8 +1104,7 @@ app.get('/api/customers/:id/timeline', async (req, res) => {
       ...events.rows.map(e => ({ type:e.type, content:e.message, date:e.created_at }))
     ].sort((a,b) => new Date(b.date) - new Date(a.date));
     res.json({ events: events_out });
-  } catch(e) { res.status(500).json({error: e.message}); }
-});
+}));
 
 // ==================== ORDERS ====================
 app.get('/api/orders', async (req, res) => {
@@ -1547,8 +1539,7 @@ app.patch('/api/warehouse/:id/result', async (req, res) => {
 });
 
 // ==================== SEGMENTS & FOLLOW-UPS ====================
-app.get('/api/segments', async (req, res) => {
-  try {
+app.get('/api/segments', asyncHandler(async (req, res) => {
     const [vip, hot, lost, newC] = await Promise.all([
       pool.query("SELECT p.subscriber_id,p.customer_name,p.channel,p.last_seen,COUNT(o.id) as order_count FROM aykoshop_profiles p JOIN aykoshop_orders o ON o.customer_name=p.customer_name WHERE o.status='delivered' GROUP BY p.subscriber_id,p.customer_name,p.channel,p.last_seen HAVING COUNT(o.id)>=2 ORDER BY order_count DESC LIMIT 50"),
       pool.query("SELECT subscriber_id,customer_name,channel,last_seen,interested_in,EXTRACT(EPOCH FROM (NOW()-last_seen))/3600 as hours_ago FROM aykoshop_profiles WHERE stage IN ('hot','warm') AND last_seen > NOW()-INTERVAL '7 days' ORDER BY last_seen DESC LIMIT 50"),
@@ -1556,8 +1547,7 @@ app.get('/api/segments', async (req, res) => {
       pool.query("SELECT subscriber_id,customer_name,channel,last_seen,stage FROM aykoshop_profiles WHERE created_at > NOW()-INTERVAL '24 hours' ORDER BY created_at DESC LIMIT 50")
     ]);
     res.json({ vip: vip.rows, hot_not_purchased: hot.rows, lost: lost.rows, new_today: newC.rows });
-  } catch(e) { res.status(500).json({error: e.message}); }
-});
+}));
 app.get('/api/follow-ups', async (req, res) => {
   try { const r = await pool.query("SELECT p.subscriber_id,p.customer_name,p.channel,p.last_seen,p.interested_in,p.stage,EXTRACT(EPOCH FROM (NOW()-p.last_seen))/3600 as hours_since,ls.lead_score FROM aykoshop_profiles p LEFT JOIN aykoshop_lead_scores ls ON ls.subscriber_id=p.subscriber_id WHERE p.stage IN ('hot','warm') AND p.last_seen < NOW()-INTERVAL '24 hours' AND p.last_seen > NOW()-INTERVAL '14 days' ORDER BY ls.lead_score DESC NULLS LAST, p.last_seen ASC LIMIT 100"); res.json(r.rows); } catch(e) { res.status(500).json({error: e.message}); }
 });
@@ -5229,7 +5219,7 @@ app.get('/api/ops/health-center', async (req,res)=>{
 });
 
 // Per-customer intelligence — Customer360 Ultimate
-app.get('/api/customers/:id/intelligence', async (req,res)=>{ try{
+app.get('/api/customers/:id/intelligence', asyncHandler(async (req,res)=>{
   const q=await pool.query("SELECT subscriber_id,customer_name,channel,stage,interested_in,total_messages,last_seen,session_data,lifetime_value FROM aykoshop_profiles WHERE subscriber_id=$1",[req.params.id]);
   if(!q.rows.length) return res.status(404).json({error:'not found'});
   const c=q.rows[0]; const s=c.session_data||{}; const pp=purchaseProbability(c);
@@ -5240,7 +5230,7 @@ app.get('/api/customers/:id/intelligence', async (req,res)=>{ try{
   const action = pp.tier==='buy_now'?'أرسل عرض الإغلاق الآن — الزبون جاهز للشراء':pp.tier==='follow_today'?'تابعه اليوم — اهتمام واضح بلا طلب':pp.tier==='warm'?'سخّنه: أرسل صورة/قيمة منتج مناسب':'أضفه لحملة استرجاع لاحقاً';
   const summary='زبون '+(c.stage||'?')+(c.interested_in?(' مهتم بـ '+c.interested_in):'')+'، '+(c.total_messages||0)+' رسالة'+(budget?('، ميزانية '+budget+'DH'):'، بلا ميزانية محددة')+(s.rejection_count?('، '+s.rejection_count+' اعتراض'):'')+'، احتمال شراء '+pp.probability+'%.';
   res.json({ probability:pp.probability, tier:pp.tier, emoji:pp.emoji, label:pp.label, reason:pp.reason, recommended_action:action, summary, recovery_score:recovery, budget, value:c.lifetime_value||0, interests:c.interested_in||null, last_product:s.last_product_name||null, rejections:s.rejection_count||0 });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 
 
 
@@ -5291,13 +5281,11 @@ app.patch('/api/workflow-errors/:id/resolve', async (req, res) => {
 });
 
 // ==================== EXPORT ====================
-app.get('/api/export/customers', async (req, res) => {
-  try {
+app.get('/api/export/customers', asyncHandler(async (req, res) => {
     const r = await pool.query("SELECT p.customer_name,p.channel,p.stage,p.interested_in,p.total_messages,p.last_seen,COALESCE(ls.lead_score,0) as lead_score FROM aykoshop_profiles p LEFT JOIN aykoshop_lead_scores ls ON ls.subscriber_id=p.subscriber_id ORDER BY p.last_seen DESC");
     const csv = ['الاسم,القناة,المرحلة,مهتم بـ,الرسائل,آخر ظهور,Lead Score', ...r.rows.map(row => [row.customer_name||'',row.channel||'',row.stage||'',row.interested_in||'',row.total_messages||0,row.last_seen?new Date(row.last_seen).toLocaleDateString('ar'):'',row.lead_score||0].join(','))].join('\n');
     res.setHeader('Content-Type','text/csv; charset=utf-8'); res.setHeader('Content-Disposition','attachment; filename=customers.csv'); res.send('\uFEFF'+csv);
-  } catch(e) { res.status(500).json({error: e.message}); }
-});
+}));
 app.get('/api/export/orders', async (req, res) => {
   try {
     const r = await pool.query("SELECT * FROM aykoshop_orders ORDER BY created_at DESC");
@@ -7170,13 +7158,11 @@ function generateDraftFromContext(category, profile, orders, lastInterv, recs, s
 }
 
 // ─── GET /api/customers/:id/profile360 ───────────────────────────────
-app.patch('/api/customers/:id', async (req, res) => {
-  try {
+app.patch('/api/customers/:id', asyncHandler(async (req, res) => {
     const { notes, tags, stage } = req.body;
     const r = await pool.query("UPDATE aykoshop_profiles SET notes=COALESCE($1,notes), tags=COALESCE($2,tags), stage=COALESCE($3,stage) WHERE subscriber_id=$4 RETURNING subscriber_id,notes,tags,stage", [notes, tags, stage, req.params.id]);
     res.json(r.rows[0] || {});
-  } catch(e) { res.status(500).json({error: e.message}); }
-});
+}));
 app.get('/api/customers/:id/profile360', async (req, res) => {
   try {
     const sid = req.params.id;

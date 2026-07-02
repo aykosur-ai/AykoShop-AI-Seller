@@ -48,11 +48,17 @@ a27781a76013f932c71bdd350a1727012b7868888701a932b8b660aaa71d43bf  frontend/works
 70312de451b73a5902aa110851c18d6a0c2c361343086cdf8ca9de7cc889cb08  frontend/core.js
 fdcff241a73d1a58ff1acecc843f9bff685d3d7bb4b1e092afc9440868ce7a6f  frontend/index.html
 ```
-Backend unchanged by this fix (still matches Module 3 hash above).
+Backend unchanged by this fix (still matched Module 3 hash at that point).
+
+Updated 2026-07-02 (Phase 1 Module 4 Increment 1 — Customers read/simple-write asyncHandler, backend only):
+```
+095c7b8455c85abfcbb3806820ae135d3315a9cd99661ea7dbee5e8767522605  backend/server.js
+```
+Frontend unchanged by this module (still matches the inbox-fix hashes above).
 
 ## Line counts
 
-- `backend/server.js` — 7,968 lines (7,944 before Phase 1; +13 Module 1 asyncHandler; +13 Module 2 Inc.1 mcGetInfo/mcPageInfo; -2 Module 3 Inc.1 asyncHandler on 10 catalog routes)
+- `backend/server.js` — 7,941 lines (was 7,944 before Phase 1; net change from asyncHandler de-duplication across Modules 1, 2, 3, 4 — each conversion removes a `try{`/`}catch(e){...}` wrapper pair)
 - `frontend/core.js` — 505 lines
 - `frontend/workspaces.js` — 2,777 lines
 
