@@ -11,8 +11,8 @@ This directory is a **byte-exact mirror of what is currently deployed and servin
 | `backend/server.js` | `/var/www/backend/server.js` | PM2 `aykoshop-api` :4000 |
 | `backend/hermes.js` | `/var/www/backend/hermes.js` | mounted into server.js |
 | `backend/hermes-worker.js` | `/var/www/backend/hermes-worker.js` | PM2 `hermes-worker` |
-| `frontend/core.js` | `/var/www/aykoshop-v2/core.js` | `core.js?v=37` |
-| `frontend/workspaces.js` | `/var/www/aykoshop-v2/workspaces.js` | `workspaces.js?v=114` |
+| `frontend/core.js` | `/var/www/aykoshop-v2/core.js` | `core.js?v=38` |
+| `frontend/workspaces.js` | `/var/www/aykoshop-v2/workspaces.js` | `workspaces.js?v=116` |
 | `frontend/app.css` | `/var/www/aykoshop-v2/app.css` | `app.css?v=33` |
 | `frontend/index.html` | `/var/www/aykoshop-v2/index.html` | dashboard shell |
 
@@ -41,7 +41,14 @@ Updated 2026-07-02 (Phase 1 Module 3 Increment 1 — Catalog CRUD asyncHandler, 
 ```
 02e19c609e0c43787cfa76cd76af64dfc6c27719a4b107a651e49e8fda1a5137  backend/server.js
 ```
-Frontend files unchanged by Phase 1 (still match the hashes above).
+
+Updated 2026-07-02 (Inbox conversation-display bug fix — frontend only):
+```
+a27781a76013f932c71bdd350a1727012b7868888701a932b8b660aaa71d43bf  frontend/workspaces.js
+70312de451b73a5902aa110851c18d6a0c2c361343086cdf8ca9de7cc889cb08  frontend/core.js
+fdcff241a73d1a58ff1acecc843f9bff685d3d7bb4b1e092afc9440868ce7a6f  frontend/index.html
+```
+Backend unchanged by this fix (still matches Module 3 hash above).
 
 ## Line counts
 
