@@ -106,6 +106,15 @@ app.use(async (req, res, next) => {
 // ===== end AUTH SHADOW =====
 
 app.use('/uploads', express.static('/var/www/uploads'));
+// Phase 1 (2026-07-02): asyncHandler — pure de-duplication of the
+// `catch(e){ res.status(500).json({error: e.message}) }` pattern.
+// Byte-identical output to the inline try/catch it replaces.
+function asyncHandler(fn) {
+  return function(req, res, next) {
+    Promise.resolve(fn(req, res)).catch(function(e) { res.status(500).json({ error: e.message }); });
+  };
+}
+
 app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: 'لم يتم رفع الصورة' });
   res.json({ success: true, url: `https://n8n.ayko.store/uploads/products/${req.file.filename}`, filename: req.file.filename });
@@ -1243,8 +1252,7 @@ app.delete('/api/unknown-questions/:id', async (req, res) => {
 // ==================== OPERATIONS CENTER ====================
 
 // Module 1 — Recent Errors (default: real errors only, hide test noise)
-app.get('/api/ops/errors', async (req, res) => {
-  try {
+app.get('/api/ops/errors', asyncHandler(async (req, res) => {
     const { resolved, limit = 50, node, show_test = 'false' } = req.query;
     let conditions = [], params = [], idx = 1;
     // By default exclude test errors — pass ?show_test=true to include them
@@ -1262,12 +1270,10 @@ app.get('/api/ops/errors', async (req, res) => {
       params
     );
     res.json({ errors: r.rows, total: r.rows.length });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 // Deduplicated incidents view: same subscriber + same error type + 15-min window = 1 incident
-app.get('/api/ops/errors/incidents', async (req, res) => {
-  try {
+app.get('/api/ops/errors/incidents', asyncHandler(async (req, res) => {
     const { hours = 24 } = req.query;
     const r = await pool.query(`
       SELECT
@@ -1293,11 +1299,9 @@ app.get('/api/ops/errors/incidents', async (req, res) => {
       ORDER BY first_seen DESC
     `);
     res.json({ incidents: r.rows, total_incidents: r.rows.length });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
-app.get('/api/ops/errors/summary', async (req, res) => {
-  try {
+app.get('/api/ops/errors/summary', asyncHandler(async (req, res) => {
     const [byType, byNode, trend, realUnresolved, testTotal, realTotal] = await Promise.all([
       pool.query(`
         SELECT error_type, severity, COUNT(*) as count
@@ -1329,12 +1333,10 @@ app.get('/api/ops/errors/summary', async (req, res) => {
       by_node: byNode.rows,
       trend:   trend.rows
     });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 // Production Health Card — single endpoint for the main status card
-app.get('/api/ops/production-health', async (req, res) => {
-  try {
+app.get('/api/ops/production-health', asyncHandler(async (req, res) => {
     const [
       realErrors24h, criticalErrors24h, unresolvedReal,
       customers24h, messages24h, aiReplies24h,
@@ -1373,8 +1375,7 @@ app.get('/api/ops/production-health', async (req, res) => {
       session_coverage_pct: Math.round(withSession / totalProfiles * 100),
       checked_at: new Date().toISOString()
     });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 app.patch('/api/ops/errors/:id/resolve', async (req, res) => {
   try {
@@ -1395,14 +1396,12 @@ app.patch('/api/ops/errors/resolve-all', async (req, res) => {
 
 // Module 2 — Service Status (OpenAI / ManyChat / Dashboard / PostgreSQL)
 let statusCache = { data: null, at: 0 };
-app.get('/api/ops/backups', async (req, res) => {
-  try {
+app.get('/api/ops/backups', asyncHandler(async (req, res) => {
     const fs=require('fs'); const dir='/var/backups/aykoshop';
     let files=[]; try{ files=fs.readdirSync(dir).filter(f=>f.endsWith('.sql.gz')).map(f=>{const st=fs.statSync(dir+'/'+f);return {name:f,size:st.size,mtime:st.mtime};}).sort((a,b)=>new Date(b.mtime)-new Date(a.mtime)); }catch(e){}
     let offbox=0; try{ offbox=fs.readdirSync(dir+'/offbox').filter(f=>f.endsWith('.enc')).length; }catch(e){}
     res.json({ count:files.length, latest:files[0]||null, total_size:files.reduce((a,f)=>a+f.size,0), offbox_encrypted:offbox, files:files.slice(0,8) });
-  } catch(e) { res.status(500).json({error:e.message}); }
-});
+}));
 app.get('/api/ops/status', async (req, res) => {
   // Cache for 30 seconds to avoid hammering external APIs
   if (statusCache.data && (Date.now() - statusCache.at) < 30000) {
@@ -1462,16 +1461,13 @@ app.post('/api/ops/resume-ai', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/ops/ai-status', async (req, res) => {
-  try {
+app.get('/api/ops/ai-status', asyncHandler(async (req, res) => {
     const r = await pool.query("SELECT value FROM aykoshop_settings WHERE key='ai_paused'");
     res.json({ ai_paused: r.rows[0]?.value === 'true' });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 // Module 4 — Funnel Analytics
-app.get('/api/ops/funnel', async (req, res) => {
-  try {
+app.get('/api/ops/funnel', asyncHandler(async (req, res) => {
     const period = req.query.period || '7d';
     const interval = period === '24h' ? '24 hours' : period === '30d' ? '30 days' : '7 days';
 
@@ -1528,8 +1524,7 @@ app.get('/api/ops/funnel', async (req, res) => {
       daily,
       by_channel: byChannel.rows
     });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 // ==================== WAREHOUSE ====================
 app.get('/api/warehouse/stats', async (req, res) => {
@@ -1681,8 +1676,7 @@ app.post('/api/system-prompt', async (req, res) => {
   } catch(e) { res.status(500).json({error: e.message}); }
 });
 // ===== Audit Log API =====
-app.get('/api/audit', async (req, res) => {
-  try {
+app.get('/api/audit', asyncHandler(async (req, res) => {
     const { entity, method, q } = req.query; const cond = [], args = []; let i = 1;
     if (entity) { cond.push(`entity=$${i++}`); args.push(entity); }
     if (method) { cond.push(`method=$${i++}`); args.push(method); }
@@ -1691,21 +1685,16 @@ app.get('/api/audit', async (req, res) => {
     const lim = Math.min(parseInt(req.query.limit) || 200, 500);
     const r = await pool.query(`SELECT * FROM aykoshop_audit_log ${where} ORDER BY created_at DESC LIMIT ${lim}`, args);
     res.json({ entries: r.rows });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-app.get('/api/audit/stats', async (req, res) => {
-  try { const r = await pool.query("SELECT entity, count(*)::int AS n FROM aykoshop_audit_log GROUP BY entity ORDER BY n DESC"); res.json({ by_entity: r.rows, total: r.rows.reduce((s,x)=>s+x.n,0) }); } catch (e) { res.status(500).json({ error: e.message }); }
-});
-app.get('/api/audit/export', async (req, res) => {
-  try {
+}));
+app.get('/api/audit/stats', asyncHandler(async (req, res) => { const r = await pool.query("SELECT entity, count(*)::int AS n FROM aykoshop_audit_log GROUP BY entity ORDER BY n DESC"); res.json({ by_entity: r.rows, total: r.rows.reduce((s,x)=>s+x.n,0) }); }));
+app.get('/api/audit/export', asyncHandler(async (req, res) => {
     const r = await pool.query("SELECT created_at,method,entity,path,status,actor,detail FROM aykoshop_audit_log ORDER BY created_at DESC LIMIT 5000");
     const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""').replace(/[\r\n]/g, ' ') + '"';
     const csv = 'time,method,entity,path,status,actor,detail\n' + r.rows.map(x => [x.created_at, x.method, x.entity, x.path, x.status, x.actor, x.detail].map(esc).join(',')).join('\n');
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=audit_log.csv');
     res.send(csv);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
+}));
 // ===== Prompt version history =====
 app.get('/api/system-prompt/versions', async (req, res) => {
   try { const r = await pool.query("SELECT id,LEFT(prompt,4000) AS prompt,actor,created_at FROM aykoshop_prompt_versions ORDER BY created_at DESC LIMIT 50"); res.json({ versions: r.rows }); } catch (e) { res.status(500).json({ error: e.message }); }
@@ -2228,8 +2217,8 @@ async function drainOutbox(){
   return processed;
 }
 if(OUTBOX_WORKER_ON){ setInterval(()=>{ drainOutbox().catch(()=>{}); }, OUTBOX_TICK_MS); console.log('[outbox] worker ON tick='+OUTBOX_TICK_MS+'ms'); } else { console.log('[outbox] worker OFF (set OUTBOX_WORKER=on)'); }
-app.get('/api/ops/outbox/stats', async (req,res)=>{ try{ const r=await pool.query("SELECT status,count(*)::int n FROM aykoshop_outbox GROUP BY status"); const by={}; r.rows.forEach(x=>by[x.status]=x.n); res.json({by_status:by, pending:by.pending||0, failed:by.failed||0, sent:by.sent||0, dead:by.dead||0, worker:OUTBOX_WORKER_ON, tick_ms:OUTBOX_TICK_MS}); }catch(e){ res.status(500).json({error:e.message}); } });
-app.get('/api/ops/outbox', async (req,res)=>{ try{ const lim=Math.min(parseInt(req.query.limit)||100,500); const st=req.query.status; const r=await pool.query("SELECT * FROM aykoshop_outbox "+(st?"WHERE status=$1 ":"")+"ORDER BY created_at DESC LIMIT "+lim, st?[st]:[]); res.json({outbox:r.rows}); }catch(e){ res.status(500).json({error:e.message}); } });
+app.get('/api/ops/outbox/stats', asyncHandler(async (req,res)=>{ const r=await pool.query("SELECT status,count(*)::int n FROM aykoshop_outbox GROUP BY status"); const by={}; r.rows.forEach(x=>by[x.status]=x.n); res.json({by_status:by, pending:by.pending||0, failed:by.failed||0, sent:by.sent||0, dead:by.dead||0, worker:OUTBOX_WORKER_ON, tick_ms:OUTBOX_TICK_MS}); }));
+app.get('/api/ops/outbox', asyncHandler(async (req,res)=>{ const lim=Math.min(parseInt(req.query.limit)||100,500); const st=req.query.status; const r=await pool.query("SELECT * FROM aykoshop_outbox "+(st?"WHERE status=$1 ":"")+"ORDER BY created_at DESC LIMIT "+lim, st?[st]:[]); res.json({outbox:r.rows}); }));
 app.post('/api/ops/outbox/drain', async (req,res)=>{ try{ const n=await drainOutbox(); res.json({ok:true, sent:n}); }catch(e){ res.status(500).json({error:e.message}); } });
 app.patch('/api/ops/outbox/:id/requeue', async (req,res)=>{ try{ const r=await pool.query("UPDATE aykoshop_outbox SET status='pending', attempts=0, next_attempt_at=NOW(), last_error=NULL WHERE id=$1 RETURNING *",[req.params.id]); res.json(r.rows[0]||{}); }catch(e){ res.status(500).json({error:e.message}); } });
 app.post('/api/ops/outbox/retry-all', async (req,res)=>{ try{ const r=await pool.query("UPDATE aykoshop_outbox SET status='pending', attempts=0, next_attempt_at=NOW(), last_error=NULL WHERE status IN ('failed','dead','held') RETURNING id"); const n=await drainOutbox().catch(()=>0); res.json({ok:true, requeued:r.rowCount, drained:n}); }catch(e){ res.status(500).json({error:e.message}); } });
@@ -5298,9 +5287,7 @@ app.get('/api/lead-scores', async (req, res) => {
 app.get('/api/pipeline', async (req, res) => {
   try { const r = await pool.query("SELECT p.*, COALESCE(ls.lead_score,0) as score FROM aykoshop_profiles p LEFT JOIN aykoshop_lead_scores ls ON ls.subscriber_id=p.subscriber_id ORDER BY score DESC LIMIT 200"); res.json(r.rows); } catch(e) { res.status(500).json({error: e.message}); }
 });
-app.get('/api/workflow-errors', async (req, res) => {
-  try { const r = await pool.query("SELECT * FROM aykoshop_workflow_errors ORDER BY started_at DESC LIMIT 100"); res.json(r.rows); } catch(e) { res.status(500).json({error: e.message}); }
-});
+app.get('/api/workflow-errors', asyncHandler(async (req, res) => { const r = await pool.query("SELECT * FROM aykoshop_workflow_errors ORDER BY started_at DESC LIMIT 100"); res.json(r.rows); }));
 app.patch('/api/workflow-errors/:id/resolve', async (req, res) => {
   try { await pool.query("UPDATE aykoshop_workflow_errors SET resolved=true WHERE id=$1", [req.params.id]); res.json({success:true}); } catch(e) { res.status(500).json({error: e.message}); }
 });
@@ -5520,8 +5507,7 @@ app.post('/api/workflow-errors', async (req, res) => {
 });
 
 // Leak detection endpoint — returns count of [object Object] leaks in DB
-app.get('/api/workflow-errors/leak-check', async (req, res) => {
-  try {
+app.get('/api/workflow-errors/leak-check', asyncHandler(async (req, res) => {
     const r = await pool.query(
       "SELECT COUNT(*) as leaks FROM aykoshop_workflow_errors WHERE error_message LIKE '%[object Object]%'"
     );
@@ -5539,8 +5525,7 @@ app.get('/api/workflow-errors/leak-check', async (req, res) => {
       }
     }
     res.json({ leaks, status: leaks === 0 ? 'clean' : 'leak_detected' });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
+}));
 
 
 // ==================== HUMAN INTERVENTION CENTER ====================
@@ -6335,13 +6320,13 @@ app.get('/api/buyer-context/:sub', async (req,res)=>{ try{
 }catch(e){ res.status(500).json({error:e.message}); } });
 
 // GET /api/ops/kpis-by-type — conversion by buyer type
-app.get('/api/ops/kpis-by-type', async (req,res)=>{ try{
+app.get('/api/ops/kpis-by-type', asyncHandler(async (req,res)=>{
   const t=await pool.query("SELECT buyer_type, count(*)::int leads FROM aykoshop_profiles WHERE buyer_type IS NOT NULL GROUP BY buyer_type ORDER BY leads DESC");
   const conv=await pool.query("SELECT p.buyer_type, count(DISTINCT o.subscriber_id)::int buyers FROM aykoshop_profiles p JOIN aykoshop_orders o ON o.subscriber_id=p.subscriber_id WHERE p.buyer_type IS NOT NULL GROUP BY p.buyer_type");
   const cmap={}; conv.rows.forEach(x=>cmap[x.buyer_type]=x.buyers);
   const out=t.rows.map(x=>({ buyer_type:x.buyer_type, leads:x.leads, converted:cmap[x.buyer_type]||0, conv_pct: x.leads>0?Math.round((cmap[x.buyer_type]||0)/x.leads*100):0 }));
   res.json({ by_type: out });
-}catch(e){ res.status(500).json({error:e.message}); } });
+}));
 
 // ===== MISSING PRODUCT TRACKING =====
 app.get('/api/missing-products/scan', async (req,res)=>{ try{

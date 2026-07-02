@@ -16,8 +16,9 @@ This directory is a **byte-exact mirror of what is currently deployed and servin
 | `frontend/app.css` | `/var/www/aykoshop-v2/app.css` | `app.css?v=33` |
 | `frontend/index.html` | `/var/www/aykoshop-v2/index.html` | dashboard shell |
 
-## Integrity — SHA-256 (local mirror == live VPS, verified identical at capture)
+## Integrity — SHA-256 (local mirror == live VPS, verified identical at each capture)
 
+Captured 2026-07-02 (Phase 0 baseline):
 ```
 0f4590e4b045adb76eb44fce8b0881820ca30cf9668aca471ef7285226233a81  backend/server.js
 3b3752d853ffd92d35be557b6f0576fa623a0ff2f6f18a963af0397aaa90ae10  frontend/core.js
@@ -26,9 +27,15 @@ eb0b494cffb96c18979328362630ef19882ec8a6902c3b86a2cc4f9eb91f1606  frontend/works
 440fbcb446afc94c69fddb3f685e1661854c7b01959b3009d767e755cb05f85f  frontend/index.html
 ```
 
+Updated 2026-07-02 (Phase 1 — ops/diagnostics asyncHandler, backend only):
+```
+e20840d03e0c183850a333c54a135c24995c91e5ba65c0de44349a1325535430  backend/server.js
+```
+Frontend files unchanged by Phase 1 (still match the hashes above).
+
 ## Line counts
 
-- `backend/server.js` — 7,944 lines
+- `backend/server.js` — 7,957 lines (was 7,944 before Phase 1; +13 net from the asyncHandler helper)
 - `frontend/core.js` — 505 lines
 - `frontend/workspaces.js` — 2,777 lines
 
