@@ -1,0 +1,33 @@
+# === Secrets — never commit (ADR-0004) ===
+.env
+*.env
+**/.env
+.ai-secrets.json
+**/.ai-secrets.json
+
+# Local migration/ops scripts that embed live config
+migration/
+
+# Debug / review dumps (often contain pasted secrets & logs)
+*.txt
+agent-review-output.txt
+claude-*.txt
+debug-output.txt
+*-review*.txt
+*debug*.txt
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Backups (cover .bak with any suffix separator: .bak / .bak- / .bak. / .bak_ )
+*.bak
+*.bak-*
+*.bak.*
+*.bak_*
+*.preenc
+*.bak-rot
+
+# Local ops/deploy scripts that embed live tokens (keep on VPS, not in git)
+.work/
+.claude/settings.local.json

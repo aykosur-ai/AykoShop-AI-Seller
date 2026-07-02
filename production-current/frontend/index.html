@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>AykoShop</title>
+<link rel="stylesheet" href="app.css?v=33">
+</head>
+<body>
+
+<!-- login gate -->
+<div class="login-gate show" id="login-gate">
+  <div class="login-card">
+    <div class="login-mark"><span id="login-spark"></span></div>
+    <h1>AykoShop</h1>
+    <p>لوحة التحكم الذكية</p>
+    <input type="password" id="login-pass" class="inp" placeholder="كلمة المرور" autocomplete="current-password">
+    <button class="btn primary" id="login-btn" onclick="doLogin()">دخول</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <button class="iconbtn hamb" onclick="toggleSidebar()"><span data-ic="menu"></span></button>
+  <button class="iconbtn collapse-btn" onclick="toggleCollapse()" title="طيّ القائمة"><span data-ic="menu"></span></button>
+  <div class="brand"><span class="spark" id="brand-spark"></span> <span class="bt">AykoShop</span> <span class="live" id="live-dot"></span></div>
+  <div class="searchbar" onclick="openCmd()"><span id="sb-ico"></span><span class="ph">ابحث عن زبون، طلب، منتج…</span><kbd>⌘K</kbd></div>
+  <div class="topbar-r">
+    <div class="ai-status-pill" id="ai-status-pill" onclick="location.hash='#/system'" title="حالة الذكاء — انقر للإعدادات"><span class="dot-s" id="ai-status-dot"></span><span id="ai-status-lbl">AI</span></div>
+    <div class="hpill" onclick="openHermesChat()" title="اسأل Hermes"><span class="spark" id="pill-spark"></span> <span class="pt">Hermes</span> <span id="pill-n" class="num"></span></div>
+    <button class="iconbtn" id="bell-btn" onclick="openActivityDrawer()"><span id="bell-ico"></span><span class="dot" id="bell-dot" style="display:none">0</span></button>
+    <div class="avatar" onclick="logout()" title="تسجيل الخروج">A</div>
+  </div>
+</header>
+
+<nav class="sidebar" id="sidebar">
+  <div class="nav-label">التشغيل</div>
+  <div class="nav-item" data-route="home" title="الرئيسية" onclick="location.hash='#/home'"><span data-ic="home"></span> الرئيسية</div>
+  <div class="nav-item" data-route="inbox" title="المحادثات" onclick="location.hash='#/inbox'"><span data-ic="inbox"></span> المحادثات <span class="nb hot" id="nb-inbox" style="display:none"></span></div>
+  <div class="nav-item" data-route="frozen" title="المجمّدون" onclick="location.hash='#/frozen'"><span data-ic="clock"></span> المجمّدون <span class="nb warn" id="nb-frozen" style="display:none"></span></div>
+  <div class="nav-item" data-route="orders" title="الطلبات والدفع" onclick="location.hash='#/orders'"><span data-ic="dollar"></span> الطلبات والدفع <span class="nb" id="nb-sales" style="display:none"></span></div>
+  <div class="nav-item" data-route="crm" title="الزبناء" onclick="location.hash='#/crm'"><span data-ic="user"></span> الزبناء</div>
+  <div class="nav-label">النمو</div>
+  <div class="nav-item" data-route="catalog" title="المنتجات" onclick="location.hash='#/catalog'"><span data-ic="package"></span> المنتجات</div>
+  <div class="nav-item" data-route="hermes" title="المتابعة" onclick="location.hash='#/hermes'"><span data-ic="send"></span> المتابعة <span class="nb acc" id="nb-recovery" style="display:none"></span></div>
+  <div class="nav-item" data-route="analytics" title="التقارير" onclick="location.hash='#/analytics'"><span data-ic="chart"></span> التقارير</div>
+  <div class="nav-label">النظام</div>
+  <div class="nav-item" data-route="system" title="النظام" onclick="location.hash='#/system'"><span data-ic="sliders"></span> النظام <span class="nb" id="nb-system" style="display:none"></span></div>
+  <div class="side-foot">
+    <span class="spark"><span id="foot-spark"></span></span>
+    <div><div class="t">Hermes</div><div class="s" id="foot-status">المساعد الذكي · نشط</div></div>
+  </div>
+</nav>
+<div class="sidebar-scrim" id="sidebar-scrim" onclick="toggleSidebar()"></div>
+
+<main class="main"><div class="wrap" id="view"></div></main>
+
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<div class="cmdscrim" id="cmd" onclick="if(event.target===this)closeCmd()">
+  <div class="cmd">
+    <div class="cmd-top"><span id="cmd-ico"></span><input id="cmd-input" placeholder="ابحث أو انتقل… (الأسهم للتنقل، Enter للفتح)" autocomplete="off"></div>
+    <div class="cmd-res" id="cmd-res"></div>
+  </div>
+</div>
+
+<div id="modal-mount"></div>
+<div class="toasts" id="toasts"></div>
+
+<script src="core.js?v=37"></script>
+<script src="workspaces.js?v=114"></script>
+<script>
+/* Phase 1 — sidebar collapse (desktop icon-rail) + persistence. UI-only; does not touch routing/badges. */
+window.toggleCollapse=function(){var on=document.body.classList.toggle('nav-collapsed');try{localStorage.setItem('akx_collapsed',on?'1':'0');}catch(e){}};
+(function(){try{if(localStorage.getItem('akx_collapsed')==='1')document.body.classList.add('nav-collapsed');}catch(e){}})();
+</script>
+</body>
+</html>
