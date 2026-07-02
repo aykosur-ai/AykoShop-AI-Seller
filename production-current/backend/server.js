@@ -213,7 +213,7 @@ async function _resolveWaPhone(conversation_id, supplied) {
   let p = String(supplied||'').trim();
   if (p) return p.replace(/[^\d+]/g,'');
   try {
-    const r = await fetch('https://api.manychat.com/fb/subscriber/getInfo?subscriber_id='+encodeURIComponent(conversation_id), { headers:{'Authorization':'Bearer '+(_mcKey()||'')} });
+    const r = await mcGetInfo(conversation_id);
     const j = await r.json().catch(()=>({}));
     p = String((j && j.data && j.data.whatsapp_phone) || '').trim();
   } catch(_e){}
@@ -894,12 +894,12 @@ app.get('/api/customers/:id/ai-status', async (req, res) => {
 });
 
 // [DIAG read-only] ManyChat subscriber getInfo — channel + last_interaction (audit WhatsApp vs Messenger send window). Remove after diagnosis.
-app.get('/api/_diag/mcinfo/:id', async (req,res)=>{ try{ const r=await fetch('https://api.manychat.com/fb/subscriber/getInfo?subscriber_id='+encodeURIComponent(req.params.id),{headers:{'Authorization':'Bearer '+(_mcKey()||'')},signal:AbortSignal.timeout(8000)}); const j=await r.json().catch(()=>({})); res.json(j); }catch(e){ res.status(500).json({error:e.message}); } });
+app.get('/api/_diag/mcinfo/:id', async (req,res)=>{ try{ const r=await mcGetInfo(req.params.id, 8000); const j=await r.json().catch(()=>({})); res.json(j); }catch(e){ res.status(500).json({error:e.message}); } });
 // [DIAG read-only] which ManyChat API key the backend is actually using (source + masked) + the page it belongs to. Confirms key change took effect.
 app.get('/api/_diag/mckey', async (req,res)=>{ try{
   var src='NONE'; try{ if(_aiSecrets && _aiSecrets['manychat_api'] && String(_aiSecrets['manychat_api']).trim()) src='key-manager(_aiSecrets)'; else if(process.env.MANYCHAT_API_KEY) src='env(MANYCHAT_API_KEY)'; }catch(_e){ src='err'; }
   var k=_mcKey()||''; var masked = k ? (k.slice(0,5)+'…'+k.slice(-5)+' (len '+k.length+')') : 'EMPTY';
-  var page=null; try{ const r=await fetch('https://api.manychat.com/fb/page/getInfo',{headers:{'Authorization':'Bearer '+k},signal:AbortSignal.timeout(8000)}); page=await r.json().catch(()=>({})); }catch(e){ page={error:e.message}; }
+  var page=null; try{ const r=await mcPageInfo(8000); page=await r.json().catch(()=>({})); }catch(e){ page={error:e.message}; }
   res.json({ key_source:src, key_masked:masked, page });
 }catch(e){ res.status(500).json({error:e.message}); } });
 // [DIAG TEMP] flow-delivery test — HARDCODED to ONLY the authorized test sub 366643236. Runs the AI's WhatsApp mechanism (operator_reply custom field + sendFlow) to prove whether the flow actually DELIVERS out-of-window. Remove after the test.
@@ -1418,7 +1418,7 @@ app.get('/api/ops/status', async (req, res) => {
 
   const [openai, manychat, database] = await Promise.all([
     check(() => fetch('https://api.openai.com/v1/models', { headers:{'Authorization':OPENAI_KEY}, signal: AbortSignal.timeout(5000) })),
-    check(() => fetch('https://api.manychat.com/fb/page/getInfo', { headers:{'Authorization':MC_KEY}, signal: AbortSignal.timeout(5000) })),
+    check(() => mcPageInfo(5000)),
     check(() => pool.query('SELECT 1'))
   ]);
 
@@ -2345,6 +2345,19 @@ const _KEY_SECRETS={ telegram_bot:'Telegram Bot Token', manychat_api:'ManyChat A
 function getSecret(name, envName){ try{ var v=_aiSecrets[name]; if(v && String(v).trim()) return String(v).trim(); }catch(_e){} return (envName && process.env[envName]) ? String(process.env[envName]) : ''; }
 function _tgTok(){ return getSecret('telegram_bot','HTG_TOKEN'); }
 function _mcKey(){ return getSecret('manychat_api','MANYCHAT_API_KEY'); }
+// Phase 1 Module 2 (2026-07-02): mcGetInfo/mcPageInfo — pure de-duplication of the
+// read-only ManyChat getInfo/page-getInfo fetch pattern. Byte-identical wire
+// behavior (same URL, same Authorization header, optional per-call timeout).
+function mcGetInfo(subscriberId, timeoutMs) {
+  var opts = { headers: { 'Authorization': 'Bearer ' + (_mcKey()||'') } };
+  if (timeoutMs) opts.signal = AbortSignal.timeout(timeoutMs);
+  return fetch('https://api.manychat.com/fb/subscriber/getInfo?subscriber_id=' + encodeURIComponent(subscriberId), opts);
+}
+function mcPageInfo(timeoutMs) {
+  var opts = { headers: { 'Authorization': 'Bearer ' + (_mcKey()||'') } };
+  if (timeoutMs) opts.signal = AbortSignal.timeout(timeoutMs);
+  return fetch('https://api.manychat.com/fb/page/getInfo', opts);
+}
 // ===== PHASE B: SEND PROXY — n8n/scripts call these with x-service-token; the actual tokens stay server-side in the KM (zero secrets in n8n). =====
 function _serviceOk(req){ try{ const st=req&&req.headers&&req.headers['x-service-token']; return !!(st && process.env.SERVICE_TOKEN && String(st)===String(process.env.SERVICE_TOKEN)); }catch(_e){ return false; } }
 app.post('/api/send/telegram', async (req,res)=>{ try{
@@ -5218,7 +5231,7 @@ app.get('/api/ops/health-center', async (req,res)=>{
     svc('Claude (Anthropic)',2,async()=>{ const r=await fetch('https://api.anthropic.com/v1/models',{headers:{'x-api-key':_ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},signal:AbortSignal.timeout(6000)}); return {status:r.ok?'up':'down',detail:'HTTP '+r.status}; }),
     svc('GPT-4o Vision',1,async()=>{ const cfg=await getAiConfig(); if(cfg.providers&&cfg.providers.vision===false) return {status:'idle',detail:'معطّل'}; const q=await pool.query("SELECT max(created_at) m FROM aykoshop_image_logs").catch(()=>({rows:[{m:null}]})); const m=q.rows[0].m; return {status:'up',detail:m?('آخر صورة قبل '+Math.round((Date.now()-new Date(m).getTime())/60000)+'د'):'مفعّل'}; }),
     svc('Outbox',2,async()=>{ const q=await pool.query("SELECT status,count(*)::int n FROM aykoshop_outbox GROUP BY status"); const by={}; q.rows.forEach(x=>by[x.status]=x.n); const dead=by.dead||0,pend=by.pending||0; return {status: OUTBOX_WORKER_ON?((dead>0||pend>20)?'stale':'up'):'down', detail:(OUTBOX_WORKER_ON?'worker on':'worker OFF')+' · pending '+pend+' · dead '+dead}; }),
-    svc('ManyChat API',1,async()=>{ const k=_mcKey()||''; if(!k) return {status:'unknown',detail:'no key'}; const r=await fetch('https://api.manychat.com/fb/page/getInfo',{headers:{'Authorization':'Bearer '+k},signal:AbortSignal.timeout(6000)}); return {status:r.ok?'up':'down',detail:'HTTP '+r.status}; }),
+    svc('ManyChat API',1,async()=>{ const k=_mcKey()||''; if(!k) return {status:'unknown',detail:'no key'}; const r=await mcPageInfo(6000); return {status:r.ok?'up':'down',detail:'HTTP '+r.status}; }),
     svc('WhatsApp',1,async()=>{ const q=await pool.query("SELECT max(created_at) m FROM aykoshop_events WHERE channel='whatsapp'").catch(()=>({rows:[{m:null}]})); const m=q.rows[0].m; const mins=m?Math.round((Date.now()-new Date(m).getTime())/60000):null; return {status:(mins!=null&&mins<120)?'up':(mins!=null?'stale':'unknown'),detail:m?('آخر واتساب قبل '+mins+'د'):'—'}; })
   ]);
   const _HLINKS={'OpenAI':'https://status.openai.com','Claude (Anthropic)':'https://status.anthropic.com','Telegram Bot':'https://api.telegram.org','n8n':'https://n8n.ayko.store','ManyChat→n8n':'https://app.manychat.com','ManyChat API':'https://app.manychat.com','Outbox':'#/system','GPT-4o Vision':'#/ai','WhatsApp':null,'PostgreSQL':null,'Dashboard API':null,'SSE':null};

@@ -27,15 +27,20 @@ eb0b494cffb96c18979328362630ef19882ec8a6902c3b86a2cc4f9eb91f1606  frontend/works
 440fbcb446afc94c69fddb3f685e1661854c7b01959b3009d767e755cb05f85f  frontend/index.html
 ```
 
-Updated 2026-07-02 (Phase 1 — ops/diagnostics asyncHandler, backend only):
+Updated 2026-07-02 (Phase 1 Module 1 — ops/diagnostics asyncHandler, backend only):
 ```
 e20840d03e0c183850a333c54a135c24995c91e5ba65c0de44349a1325535430  backend/server.js
+```
+
+Updated 2026-07-02 (Phase 1 Module 2 Increment 1 — Channels read-only ManyChat GET wrapper, backend only):
+```
+1eb2224f41feba6e913efa47f7b5df8ddcaa80e791b78c47ab337b76e08ed774  backend/server.js
 ```
 Frontend files unchanged by Phase 1 (still match the hashes above).
 
 ## Line counts
 
-- `backend/server.js` — 7,957 lines (was 7,944 before Phase 1; +13 net from the asyncHandler helper)
+- `backend/server.js` — 7,970 lines (7,944 before Phase 1; +13 from Module 1's asyncHandler; +13 from Module 2 Inc.1's mcGetInfo/mcPageInfo)
 - `frontend/core.js` — 505 lines
 - `frontend/workspaces.js` — 2,777 lines
 
